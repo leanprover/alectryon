@@ -82,9 +82,9 @@ _output/lean3-tutorial.lean3: lean3-tutorial.rst
 recipes_targets += _output/lean3-tutorial.lean3
 
 # reST+Lean4 → HTML
-_output/lean4-tactics-MyST.html: lean4-tactics-myst.md
-	$(alectryon) lean4-tactics-MyST.md
-recipes_targets += _output/lean4-tactics-MyST.html
+_output/lean4-tactics-myst.html: lean4-tactics-myst.md
+	$(alectryon) lean4-tactics-myst.md
+recipes_targets += _output/lean4-tactics-myst.html
 
 # reST+Lean4 → HTML
 _output/lean4-tactics.html: lean4-tactics.rst

@@ -41,7 +41,8 @@ SOFTWARE.
 
 /* Undo <small> and <blockquote>, added to improve RSS rendering. */
 
-.alectryon-io small.alectryon-output {
+.alectryon-io small.alectryon-output,
+.alectryon-io small.alectryon-type-info {
     font-size: inherit;
 }
 
@@ -219,7 +220,8 @@ In any case, make an exception for comments:
 	    text-shadow: 0 0 1px rgb(46, 52, 54, 0.3); /* #2e3436 + opacity */
     }
 
-    .alectryon-io .alectryon-sentence:hover .alectryon-output {
+    .alectryon-io .alectryon-sentence:hover .alectryon-output,
+    .alectryon-io .alectryon-sentence:hover .alectryon-type-info {
         z-index: 2; /* Place hovered goals above .alectryon-sentence.alectryon-target ones */
     }
 }
@@ -254,8 +256,19 @@ In any case, make an exception for comments:
     z-index: 1; /* Default to an index lower than that used by :hover */
 }
 
+.alectryon-io .alectryon-type-info {
+    box-sizing: border-box;
+    display: none;
+    bottom: 100%;
+    position: absolute;
+    padding: 0.25em 0;
+    overflow: visible; /* Let box-shadows overflow */
+    z-index: 1; /* Default to an index lower than that used by :hover */
+}
+
 @media (any-hover: hover) { /* See note above about this @media query */
-    .alectryon-io .alectryon-sentence:hover .alectryon-output:not(:hover) {
+    .alectryon-io .alectryon-sentence:hover .alectryon-output:not(:hover),
+    .alectryon-io .alectryon-sentence:hover .alectryon-type-info::not(:hover) {
         display: block;
     }
 }

@@ -110,7 +110,8 @@ def enrich_sentences(fragments):
             outputs = [Messages([RichMessage(m.contents) for m in fr.messages]),
                        Goals([_enrich_goal(g) for g in fr.goals])]
             yield RichSentence(input=RichCode(fr.contents), outputs=outputs,
-                               prefixes=[], suffixes=[], annots=IOAnnots())
+                               prefixes=[], suffixes=[], annots=IOAnnots(),
+                               typeinfo=fr.typeinfo, link=fr.link)
         else:
             yield fr
 

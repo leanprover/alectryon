@@ -62,8 +62,10 @@ class DriverInfo(namedtuple("DriverInfo", "name version")):
 Hypothesis = namedtuple("Hypothesis", "names body type")
 Goal = namedtuple("Goal", "name conclusion hypotheses")
 Message = namedtuple("Message", "contents")
-Sentence = namedtuple("Sentence", "contents messages goals")
+TypeInfo = namedtuple("TypeInfo", "name type docstring")
+Sentence = namedtuple("Sentence", "contents messages goals typeinfo link")
 Text = namedtuple("Text", "contents")
+# We keep sentence for backwards compatibility atm
 Fragment = Union[Text, Sentence]
 
 class Enriched():
@@ -96,7 +98,7 @@ RichHypothesis = _enrich(Hypothesis)
 RichGoal = _enrich(Goal)
 RichMessage = _enrich(Message)
 RichCode = _enrich(namedtuple("Code", "contents"))
-RichSentence = _enrich(namedtuple("Sentence", "input outputs annots prefixes suffixes"))
+RichSentence = _enrich(namedtuple("Sentence", "input outputs annots prefixes suffixes typeinfo link"))
 
 def b16(i):
     return hex(i)[len("0x"):]
@@ -311,9 +313,9 @@ class Document:
 
         >>> Document.split_fragment(Text("abcxyz"), 3)
         (Text(contents='abc'), Text(contents='xyz'))
-        >>> Document.split_fragment(Sentence("abcxyz", [Message("out")], []), 3)
-        (Sentence(contents='abc', messages=[], goals=[]),
-         Sentence(contents='xyz', messages=[Message(contents='out')], goals=[]))
+        >>> Document.split_fragment(Sentence("abcxyz", [Message("out")], [], None, None), 3)
+        (Sentence(contents='abc', messages=[], goals=[], typeinfo=None, link=None),
+         Sentence(contents='xyz', messages=[Message(contents='out')], goals=[], typeinfo=None, link=None))
         """
         before = fr.contents[:cutoff]
         after = fr.contents[cutoff:]
@@ -321,7 +323,7 @@ class Document:
         if isinstance(fr, Text):
             fr0 = Text(before)
         else:
-            fr0 = Sentence(before, messages=[], goals=[])
+            fr0 = Sentence(before, messages=[], goals=[], typeinfo=None, link=None)
         return fr0, fr._replace(contents=after)
 
     @classmethod

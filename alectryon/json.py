@@ -47,6 +47,7 @@ TYPE_OF_ALIASES = {
     "goals": core.Goals,
     "messages": core.Messages,
     "rich_sentence": core.RichSentence,
+    "typeinfo": core.TypeInfo
 }
 
 ALIASES_OF_TYPE = {

@@ -46,8 +46,9 @@ TYPE_OF_ALIASES = {
     "sentence": core.Sentence,
     "goals": core.Goals,
     "messages": core.Messages,
-    "rich_sentence": core.RichSentence,
-    "typeinfo": core.TypeInfo
+    "token": core.Token,
+    "contents": core.Contents,
+    "rich_sentence": core.RichSentence
 }
 
 ALIASES_OF_TYPE = {
@@ -75,6 +76,8 @@ class PlainSerializer:
         if isinstance(obj, dict):
             assert "_type" not in obj
             return {k: PlainSerializer.encode(v) for k, v in obj.items()}
+        if isinstance(obj, core.FragmentContent):
+            return PlainSerializer.encode(obj.to_contents())
         type_name = ALIASES_OF_TYPE.get(type(obj).__name__)
         if type_name:
             d: Dict[str, Any] = {"_type": type_name} # Put _type first

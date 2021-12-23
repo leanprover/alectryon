@@ -26,7 +26,7 @@ from pathlib import Path
 from alectryon import json
 
 from alectryon.json import PlainSerializer
-from .core import CLIDriver, EncodedDocument, Text, Fragment
+from .core import CLIDriver, EncodedDocument, FragmentContent, indent, Text, Token, update_contents_to_token_list
 
 class Lean4(CLIDriver):
     BIN = "leanInk"
@@ -88,13 +88,15 @@ class Lean4(CLIDriver):
     def annotate(self, chunks):
         document = EncodedDocument(chunks, "\n", encoding="utf-8")
         self.resolve_lake_arg()
-        result: List[Fragment] = self.run_leanInk_document(document)
+        result = update_contents_to_token_list(self.run_leanInk_document(document))
 
         if not result:
             return list([])
 
         # Sometimes we require an additonal \n and sometimes not. I wasn't really able to
         # find out exactly when, but this workaround seems to work for almost all cases.
-        if not result[-1].contents.endswith("\n"):
-            result = result + [Text(contents="\n")]
-        return list(document.recover_chunks(result))
+        if result[-1].contents.endswith("\n"):
+            return list(document.recover_chunks(result))
+        else:
+            result += [Text(contents=FragmentContent("\n"))]
+            return list(document.recover_chunks(result))

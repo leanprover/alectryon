@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from functools import reduce
 from typing import Any, DefaultDict, Dict, Iterable, IO, \
     NamedTuple, NoReturn, Optional, Tuple, Union
 
@@ -63,10 +64,21 @@ Hypothesis = namedtuple("Hypothesis", "names body type")
 Goal = namedtuple("Goal", "name conclusion hypotheses")
 Message = namedtuple("Message", "contents")
 TypeInfo = namedtuple("TypeInfo", "name type docstring")
-Sentence = namedtuple("Sentence", "contents messages goals typeinfo link")
+Sentence = namedtuple("Sentence", "contents messages goals")
 Text = namedtuple("Text", "contents")
-# We keep sentence for backwards compatibility atm
+Token = namedtuple("Token", "raw typeinfo link")
 Fragment = Union[Text, Sentence]
+
+def update_contents_to_token_list(fragments: Iterable[Fragment]):
+    ''' Compatibility method to replace str instances in Fragment.contents with new Token tuple:
+
+    >>> [Text(contents="abcd"), Text(contents=[Token(raw="xyz")])]
+    [Text(contents=FragmentContent([Token(raw="abcd")])), Text(contents=FragmentContent([Token(raw="abcd")]))]
+    '''
+    new_fragments = []
+    for fragment in fragments:
+        new_fragments.append(fragment._replace(contents=FragmentContent(fragment.contents)))
+    return new_fragments
 
 class Enriched():
     def __new__(cls, *args, **kwargs):
@@ -98,7 +110,7 @@ RichHypothesis = _enrich(Hypothesis)
 RichGoal = _enrich(Goal)
 RichMessage = _enrich(Message)
 RichCode = _enrich(namedtuple("Code", "contents"))
-RichSentence = _enrich(namedtuple("Sentence", "input outputs annots prefixes suffixes typeinfo link"))
+RichSentence = _enrich(namedtuple("Sentence", "input outputs annots prefixes suffixes"))
 
 def b16(i):
     return hex(i)[len("0x"):]
@@ -311,31 +323,30 @@ class Document:
     def split_fragment(fr: Fragment, cutoff):
         """Split `fr` at position `cutoff`.
 
-        >>> Document.split_fragment(Text("abcxyz"), 3)
-        (Text(contents='abc'), Text(contents='xyz'))
-        >>> Document.split_fragment(Sentence("abcxyz", [Message("out")], [], None, None), 3)
-        (Sentence(contents='abc', messages=[], goals=[], typeinfo=None, link=None),
-         Sentence(contents='xyz', messages=[Message(contents='out')], goals=[], typeinfo=None, link=None))
+        >>> Document.split_fragment(Text(contents=[Token(raw='ab'), Token(raw='cx'), Token(raw='yz')]), 3)
+        (Text(contents=[Token(raw='ab'), Token(raw='c')]), Text(contents=[Token(raw='x'), Token(raw='yz')]))
+        >>> Document.split_fragment(Sentence(contents=[Token(raw='ab'), Token(raw='cx'), Token(raw='yz')], [Message("out")], []), 3)
+        (Sentence(contents=[Token(raw='ab'), Token(raw='c')], messages=[], goals=[]),
+         Sentence(contents=[Token(raw='x'), Token(raw='yz')], messages=[Message(contents='out')], goals=[]))
         """
-        before = fr.contents[:cutoff]
-        after = fr.contents[cutoff:]
+        (before, after) = fr.contents.split(cutoff=cutoff)
         fr0: Fragment
         if isinstance(fr, Text):
             fr0 = Text(before)
         else:
-            fr0 = Sentence(before, messages=[], goals=[], typeinfo=None, link=None)
+            fr0 = Sentence(before, messages=[], goals=[])
         return fr0, fr._replace(contents=after)
 
     @classmethod
     def split_fragments(cls, fragments, cutoffs):
         """Split `fragments` at positions `cutoffs`.
 
-        >>> list(Document.split_fragments([Text("abcdwxyz")], [0, 2, 4, 5, 7]))
-        [Text(contents='ab'), Text(contents='cd'),
-         Text(contents='w'), Text(contents='xy'), Text(contents='z')]
-        >>> list(Document.split_fragments([Text("abcd"), Text("wxyz")], [0, 2, 4, 5, 7]))
-        [Text(contents='ab'), Text(contents='cd'),
-         Text(contents='w'), Text(contents='xy'), Text(contents='z')]
+        >>> list(Document.split_fragments([Text(contents=[Token(raw="abcdwxyz")])], [0, 2, 4, 5, 7]))
+        [Text(contents=[Token(raw="ab")]), Text(contents=[Token(raw="cd")]),
+         Text(contents=[Token(raw="w")]), Text(contents=[Token(raw="xy")]), Text(contents=[Token(raw="z")])]
+        >>> list(Document.split_fragments([Text(contents=[Token(raw="abcd")]), Text(contents=[Token(raw="wxyz")])], [0, 2, 4, 5, 7]))
+        [Text(contents=[Token(raw="ab")]), Text(contents=[Token(raw="cd")]),
+         Text(contents=[Token(raw="w")]), Text(contents=[Token(raw="xy")]), Text(contents=[Token(raw="z")])]
         """
         fragments = deque(cls.with_boundaries(fragments))
         for cutoff in cutoffs:
@@ -363,7 +374,7 @@ class Document:
                 before, after = cls.split_fragment(frs[0].e, cutoff)
                 frs[0] = frs[0]._replace(beg=chunk.end, e=after)
                 chunk_frs.append(before)
-            assert chunk.e == chunk.e[0:0].join(c.contents for c in chunk_frs)
+            assert chunk.e == chunk.e[0:0].join(str(c.contents) for c in chunk_frs)
             yield chunk_frs
         assert not frs
 
@@ -380,7 +391,7 @@ class Document:
         for fragments in grouped:
             if fragments:
                 assert fragments[-1].contents.endswith(separator)
-                contents = fragments[-1].contents[:-len(separator)]
+                (contents, _) = fragments[-1].contents.split_at_pos(-len(separator))
                 fragments[-1] = fragments[-1]._replace(contents=contents)
                 if isinstance(fragments[-1], Text) and not contents:
                     fragments.pop()
@@ -421,6 +432,80 @@ class StderrObserver(Observer):
         sys.stderr.write("{} ({}/{}) {}\n".format(header, level_name, n.level, message))
 
 PrettyPrinted = namedtuple("PrettyPrinted", "sid pp")
+Contents = namedtuple("Contents", "tokens")
+
+class FragmentContent:
+    tokens: Iterable[Token]
+
+    def __init__(self, val=[]):
+        if isinstance(val, str):
+            if val:
+                self.tokens = [Token(val, None, None)]
+            else:
+                self.tokens = []
+        elif isinstance(val, Contents):
+            self.tokens = val.tokens
+        else:
+            self.tokens = val
+        
+    def __add__(self, other):
+        if isinstance(other, FragmentContent):
+            return FragmentContent(self.tokens + other.tokens)
+        elif isinstance(other, Token):
+            if not other.raw:
+                return FragmentContent(self.tokens)
+            return FragmentContent(self.tokens + [other])
+        elif isinstance(other, Iterable):
+            return FragmentContent(self.tokens + other)
+
+    def __iadd__(self, other):
+        return self + other
+
+    def __len__(self):
+        return reduce(lambda a, b: a + len(b), self.tokens, 0)
+    
+    def __str__(self):
+        return "".join(c.raw for c in self.tokens)
+
+    def split_at_str(self, char: str):
+        contents = [FragmentContent([])]
+        for token in self.tokens:
+            splits = token.raw.split(char)
+            if splits[0]:
+                contents[-1].tokens.append(token._replace(raw=splits[0]))
+            for split in splits[1:]:
+                if not split:
+                    continue
+                contents.append(FragmentContent([token._replace(raw=split)]))
+        return contents
+    
+    def split_at_pos(self, cutoff: int):
+        """Split the list of tokens at position `cutoff`
+        >>> Document.split_fragment_content([Token(raw='ab'), Token(raw='cx'), Token(raw='yz')], 3)
+        ([Token(raw='ab'), Token(raw='c')],[Token(raw='x'), Token(raw='yz')])
+        """
+        if cutoff < 0:
+            cutoff = self.__len__() - cutoff
+        before = []
+        after = []
+        position = 0
+        for token in self.tokens:
+            if not after:
+                after.append(token)
+                continue
+            if token.raw.len() <= cutoff - position:
+                before.append(token)
+                position += token.raw.len()
+                continue
+            before.append(token._replace(raw=token.raw[:cutoff - position]))
+            after.append(token._replace(raw=token.raw[cutoff - position:]))
+        return (FragmentContent(before), FragmentContent(after))
+
+    def to_contents(self):
+        return Contents(tokens=self.tokens)
+
+    def endswith(self, str: str):
+        return self.__str__().endswith(str)
 
 class Driver():
     def __init__(self):

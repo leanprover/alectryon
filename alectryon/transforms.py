@@ -28,7 +28,7 @@ from copy import copy
 from collections import namedtuple
 
 from . import markers
-from .core import Sentence, Text, Names, Enriched, \
+from .core import Fragment, FragmentContent, Sentence, Text, Token, Names, Enriched, \
     RichHypothesis, RichGoal, RichMessage, RichCode, \
     Goals, Messages, RichSentence, ALL_LANGUAGES
 
@@ -96,6 +96,19 @@ class IOAnnots:
         return "IOAnnots(unfold={}, fails={}, filters={}, props={})".format(
             self.unfold, self.fails, self.filters, self.props)
 
+def _convert_contents_new_format(contents):
+    if isinstance(contents, str):
+        return [str]
+    else:
+        return contents
+
+def transform_contents_format(fragments):
+    for fr in fragments:
+        if isinstance(fr, Sentence):
+            yield fr._replace(_convert_contents_new_format(fr.contents))
+        elif isinstance(fr, Text):
+            yield fr._replace(_convert_contents_new_format(fr.contents))
+
 def _enrich_goal(g):
     return RichGoal(g.name,
                     RichCode(g.conclusion),
@@ -110,8 +123,7 @@ def enrich_sentences(fragments):
             outputs = [Messages([RichMessage(m.contents) for m in fr.messages]),
                        Goals([_enrich_goal(g) for g in fr.goals])]
             yield RichSentence(input=RichCode(fr.contents), outputs=outputs,
-                               prefixes=[], suffixes=[], annots=IOAnnots(),
-                               typeinfo=fr.typeinfo, link=fr.link)
+                               prefixes=[], suffixes=[], annots=IOAnnots())
         else:
             yield fr
 
@@ -201,9 +213,9 @@ def inherit_io_annots(fragments, annots):
         yield fr
 
 def __read_io_comments(annots, contents, lang, must_match=True):
-    for m in IO_COMMENT_RE[lang].finditer(contents):
+    for m in IO_COMMENT_RE[lang].finditer(str(contents)):
         _update_io_annots(annots, m.group(0), ONE_IO_ANNOT_RE, must_match=must_match)
-    return IO_COMMENT_RE[lang].sub("", contents)
+    return IO_COMMENT_RE[lang].sub("", str(contents))
 
 def _contents(obj):
     if isinstance(obj, RichSentence):
@@ -400,7 +412,7 @@ LEADING_BLANKS_RE = re.compile(r'\A([ \t]*(?:\n|\Z))?(.*?)([ \t]*)\Z',
 
 def isolate_blanks(txt):
     """Split `txt` into blanks and an optional newline, text, and blanks."""
-    return LEADING_BLANKS_RE.match(txt).groups()
+    return LEADING_BLANKS_RE.match(str(txt)).groups()
 
 def group_whitespace_with_code(fragments):
     r"""Attach spaces to neighboring sentences.
@@ -581,17 +593,17 @@ def _check_line_lengths(lines, first_linum, threshold, upto):
             yield first_linum + ln, line
 
 def find_long_lines(fragments, threshold):
-    linum, prefix = 0, ""
+    linum, prefix = 0, FragmentContent([])
     for fr in fragments:
         if hasattr(fr, "props") and not _enabled(fr):
             continue
-        prefix += "".join(getattr(fr, "prefixes", ()))
-        suffix = "".join(getattr(fr, "suffixes", ()))
-        lines = (prefix + (_contents(fr) or "") + suffix).split("\n")
+        prefix += Token("".join(getattr(fr, "prefixes", ())), None, None)
+        suffix = Token("".join(getattr(fr, "suffixes", ())), None, None)
+        lines = FragmentContent(prefix.tokens + (_contents(fr) or FragmentContent()).tokens + [suffix]).split_at_str("\n")
         yield from _check_line_lengths(lines, linum, threshold, len(lines) - 1)
         linum += len(lines) - 1
         prefix = lines[-1]
-    lines = prefix.split("\n")
+    lines = prefix.split_at_str("\n")
     yield from _check_line_lengths(lines, linum, threshold, len(lines))
 
 COQ_CHUNK_DELIMITER = re.compile(r"(?:[ \t]*\n){2,}")

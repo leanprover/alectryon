@@ -329,7 +329,7 @@ class Document:
         (Sentence(contents=[Token(raw='ab'), Token(raw='c')], messages=[], goals=[]),
          Sentence(contents=[Token(raw='x'), Token(raw='yz')], messages=[Message(contents='out')], goals=[]))
         """
-        (before, after) = fr.contents.split(cutoff=cutoff)
+        (before, after) = fr.contents.split_at_pos(cutoff=cutoff)
         fr0: Fragment
         if isinstance(fr, Text):
             fr0 = Text(before)
@@ -462,7 +462,7 @@ class FragmentContent:
         return self + other
 
     def __len__(self):
-        return reduce(lambda a, b: a + len(b), self.tokens, 0)
+        return reduce(lambda a, b: a + len(b.raw), self.tokens, 0)
     
     def __str__(self):
         return "".join(c.raw for c in self.tokens)
@@ -474,8 +474,7 @@ class FragmentContent:
             if splits[0]:
                 contents[-1].tokens.append(token._replace(raw=splits[0]))
             for split in splits[1:]:
-                if not split:
-                    continue
+
                 contents.append(FragmentContent([token._replace(raw=split)]))
         return contents
     
@@ -490,12 +489,12 @@ class FragmentContent:
         after = []
         position = 0
         for token in self.tokens:
-            if not after:
+            if after:
                 after.append(token)
                 continue
-            if token.raw.len() <= cutoff - position:
+            if len(token.raw) <= cutoff - position:
                 before.append(token)
-                position += token.raw.len()
+                position += len(token.raw)
                 continue
             before.append(token._replace(raw=token.raw[:cutoff - position]))
             after.append(token._replace(raw=token.raw[cutoff - position:]))
@@ -506,6 +505,19 @@ class FragmentContent:
 
     def endswith(self, str: str):
         return self.__str__().endswith(str)
+
+    def re_sub(self, repl: str):
+        tokens = []
+        had_match = False
+        for match in repl.finditer(str(self)):
+            had_match = True
+            (first, _) = self.split_at_pos(match.pos)
+            (_, third) = self.split_at_pos(match.endpos)
+            tokens += first.tokens + third.tokens
+        if had_match:
+            return FragmentContent(tokens)
+        else:
+            return self
 
 class Driver():
     def __init__(self):

@@ -105,9 +105,9 @@ def _convert_contents_new_format(contents):
 def transform_contents_format(fragments):
     for fr in fragments:
         if isinstance(fr, Sentence):
-            yield fr._replace(_convert_contents_new_format(fr.contents))
+            yield fr._replace(contents=_convert_contents_new_format(fr.contents))
         elif isinstance(fr, Text):
-            yield fr._replace(_convert_contents_new_format(fr.contents))
+            yield fr._replace(contents=_convert_contents_new_format(fr.contents))
 
 def _enrich_goal(g):
     return RichGoal(g.name,
@@ -252,7 +252,7 @@ def read_io_comments(lang):
 def _find_marked(sentence, path):
     assert isinstance(sentence, RichSentence)
 
-    if "s" in path and not path["s"].match(sentence.input.contents):
+    if "s" in path and not path["s"].match(str(sentence.input.contents)):
         return
 
     if "msg" in path:
@@ -296,7 +296,7 @@ def process_io_annots(fragments):
                     reqd = False
                 if reqd:
                     MSG = "No match found for `{}` in `{}`"
-                    yield ValueError(MSG.format(raw, fr.input.contents))
+                    yield ValueError(MSG.format(raw, str(fr.input.contents)))
 
             for obj in _find_hidden_by_annots(fr):
                 obj.props["enabled"] = False
@@ -312,7 +312,7 @@ def process_io_annots(fragments):
 
             if not fr.annots.unfold and not _enabled(fr.input) and any_output:
                 MSG = "Cannot show output of {!r} without .in or .unfold."
-                yield ValueError(MSG.format(fr.input.contents))
+                yield ValueError(MSG.format(str(fr.input.contents)))
         yield fr
 
 def _enabled(o):
@@ -459,7 +459,7 @@ def group_whitespace_with_code(fragments):
 
 COQ_BULLET = re.compile(r"\A\s*[-+*]+\s*\Z")
 def is_coq_bullet(fr):
-    return COQ_BULLET.match(fr.input.contents)
+    return COQ_BULLET.match(str(fr.input.contents))
 
 def _attach_comments_to_code(lang, fragments, predicate=lambda _: True):
     """Attach comments immediately following a sentence to the sentence itself.
@@ -562,15 +562,15 @@ COQ_FAIL_MSG_RE = re.compile(r"^The command has indeed failed with message:\s+")
 
 def is_coq_fail(fr):
     return (isinstance(fr, RichSentence) and fr.annots.fails
-            and COQ_FAIL_RE.match(fr.input.contents))
+            and COQ_FAIL_RE.match(str(fr.input.contents)))
 
 def strip_coq_failures(fragments):
     for fr in fragments:
         if is_coq_fail(fr):
             for msgs in fragment_message_sets(fr):
                 for idx, r in enumerate(msgs):
-                    msgs[idx] = r._replace(contents=COQ_FAIL_MSG_RE.sub("", r.contents))
-            fr = _replace_contents(fr, COQ_FAIL_RE.sub("", fr.input.contents))
+                    msgs[idx] = r._replace(contents=r.contents.re_sub(COQ_FAIL_MSG_RE))
+            fr = _replace_contents(fr, fr.input.contents.re_sub(COQ_FAIL_RE))
         yield fr
 
 def dedent(fragments):

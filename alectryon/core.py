@@ -24,6 +24,7 @@ from typing import Any, DefaultDict, Dict, Iterable, IO, \
 
 from collections import deque, namedtuple, defaultdict
 from contextlib import contextmanager
+from dataclasses import dataclass, field
 from importlib import import_module
 from io import TextIOWrapper
 from pathlib import Path
@@ -66,7 +67,7 @@ Message = namedtuple("Message", "contents")
 TypeInfo = namedtuple("TypeInfo", "name type docstring")
 Sentence = namedtuple("Sentence", "contents messages goals")
 Text = namedtuple("Text", "contents")
-Token = namedtuple("Token", "raw typeinfo link")
+Token = namedtuple("Token", "raw typeinfo link", defaults=("", None, None))
 Fragment = Union[Text, Sentence]
 
 def update_contents_to_token_list(fragments: Iterable[Fragment]):
@@ -77,7 +78,7 @@ def update_contents_to_token_list(fragments: Iterable[Fragment]):
     '''
     new_fragments = []
     for fragment in fragments:
-        new_fragments.append(fragment._replace(contents=FragmentContent(fragment.contents)))
+        new_fragments.append(fragment._replace(contents=FragmentContent.create(fragment.contents)))
     return new_fragments
 
 class Enriched():
@@ -434,20 +435,27 @@ class StderrObserver(Observer):
 PrettyPrinted = namedtuple("PrettyPrinted", "sid pp")
 Contents = namedtuple("Contents", "tokens")
 
+@dataclass(frozen=True)
 class FragmentContent:
-    tokens: Iterable[Token]
+    tokens: list[Token]
 
-    def __init__(self, val=[]):
+    @staticmethod
+    def create(val=[]):
         if isinstance(val, str):
             if val:
-                self.tokens = [Token(val, None, None)]
+                return FragmentContent([Token(val, None, None)])
             else:
-                self.tokens = []
+                return FragmentContent([])
+        elif isinstance(val, Token):
+            if val.raw:
+                return FragmentContent([val])
+            else:
+                return FragmentContent([])
         elif isinstance(val, Contents):
-            self.tokens = val.tokens
+            return FragmentContent(val.tokens)
         else:
-            self.tokens = val
-        
+            return FragmentContent(val)
+
     def __add__(self, other):
         if isinstance(other, FragmentContent):
             return FragmentContent(self.tokens + other.tokens)
@@ -455,36 +463,45 @@ class FragmentContent:
             if not other.raw:
                 return FragmentContent(self.tokens)
             return FragmentContent(self.tokens + [other])
-        elif isinstance(other, Iterable):
-            return FragmentContent(self.tokens + other)
-
-    def __iadd__(self, other):
-        return self + other
+        elif isinstance(other, list):
+            return FragmentContent(self.tokens.append(other))
 
     def __len__(self):
         return reduce(lambda a, b: a + len(b.raw), self.tokens, 0)
-    
+
     def __str__(self):
         return "".join(c.raw for c in self.tokens)
+
+    def __eq__(self, other):
+        if isinstance(other, FragmentContent):
+            return self.tokens == other.tokens
+        return False
+
+    def __repr__(self):
+        return "<" + str(self) + ">(" + str(self.tokens) + ")"
 
     def split_at_str(self, char: str):
         contents = [FragmentContent([])]
         for token in self.tokens:
             splits = token.raw.split(char)
-            if splits[0]:
+            if len(splits[0]) > 0:
                 contents[-1].tokens.append(token._replace(raw=splits[0]))
             for split in splits[1:]:
-
-                contents.append(FragmentContent([token._replace(raw=split)]))
+                if not split:
+                    contents.append(FragmentContent([]))
+                else:
+                    contents.append(FragmentContent([token._replace(raw=split)]))
         return contents
-    
+
     def split_at_pos(self, cutoff: int):
         """Split the list of tokens at position `cutoff`
         >>> Document.split_fragment_content([Token(raw='ab'), Token(raw='cx'), Token(raw='yz')], 3)
         ([Token(raw='ab'), Token(raw='c')],[Token(raw='x'), Token(raw='yz')])
         """
         if cutoff < 0:
-            cutoff = self.__len__() - cutoff
+            cutoff = self.__len__() + cutoff
+        if cutoff >= len(self):
+            return [self]
         before = []
         after = []
         position = 0
@@ -498,7 +515,7 @@ class FragmentContent:
                 continue
             before.append(token._replace(raw=token.raw[:cutoff - position]))
             after.append(token._replace(raw=token.raw[cutoff - position:]))
-        return (FragmentContent(before), FragmentContent(after))
+        return [FragmentContent(before), FragmentContent(after)]
 
     def to_contents(self):
         return Contents(tokens=self.tokens)
@@ -506,15 +523,19 @@ class FragmentContent:
     def endswith(self, str: str):
         return self.__str__().endswith(str)
 
-    def re_sub(self, repl: str):
+    def re_sub(self, repl: re, sub_token: [Token] = []):
         tokens = []
+        last = FragmentContent(self.tokens)
+        last_index = 0
         had_match = False
         for match in repl.finditer(str(self)):
             had_match = True
-            (first, _) = self.split_at_pos(match.pos)
-            (_, third) = self.split_at_pos(match.endpos)
-            tokens += first.tokens + third.tokens
+            first = last.split_at_pos(match.start() - last_index)[0]
+            last = last.split_at_pos(match.end() - last_index)[-1]
+            last_index = match.end()
+            tokens += first.tokens + sub_token
         if had_match:
+            tokens += last.tokens
             return FragmentContent(tokens)
         else:
             return self

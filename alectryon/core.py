@@ -501,7 +501,7 @@ class FragmentContent:
         if cutoff < 0:
             cutoff = self.__len__() + cutoff
         if cutoff >= len(self):
-            return [self]
+            return [self, FragmentContent([])]
         before = []
         after = []
         position = 0
@@ -520,9 +520,10 @@ class FragmentContent:
     def to_contents(self):
         return Contents(tokens=self.tokens)
 
-    def endswith(self, str: str):
-        return self.__str__().endswith(str)
+    def endswith(self, string: str):
+        return self.__str__().endswith(string)
 
+    # Replacement for repl.sub()
     def re_sub(self, repl: re, sub_token: [Token] = []):
         tokens = []
         last = FragmentContent(self.tokens)
@@ -539,6 +540,18 @@ class FragmentContent:
             return FragmentContent(tokens)
         else:
             return self
+
+    # Replacement for repl.match().groups()
+    def re_match_groups(self, repl: re):
+        match = repl.match(str(self))
+        if match is None:
+            return self, FragmentContent([]), FragmentContent([])
+        first_split = self.split_at_pos(match.start())
+        last_split = first_split[1].split_at_pos(match.end())
+        prefix = first_split[0]
+        center = last_split[0]
+        suffix = last_split[1]
+        return prefix, center, suffix
 
 class Driver():
     def __init__(self):

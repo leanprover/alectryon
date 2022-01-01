@@ -90,7 +90,7 @@ class TestFragmentContent(unittest.TestCase):
     def test_empty_split_at_pos(self):
         instance = FragmentContent.create()
         splitted = instance.split_at_pos(10)
-        self.assertEqual(len(splitted), 1)
+        self.assertEqual(len(splitted), 2)
         self.assertEqual(splitted[0], instance)
 
     def test_split_at_negative_pos(self):
@@ -148,6 +148,35 @@ class TestFragmentContent(unittest.TestCase):
         instance = FragmentContent([Token("En<>ds"), Token("wi<>th")])
         expected = FragmentContent([Token("En"), Token("SUB"), Token("ds"), Token("wi"), Token("SUB"), Token("th")])
         self.assertEqual(expected, instance.re_sub(re.compile("<>"), sub_token))
+
+    # re_match_groups
+    def test_re_match_groups_empty(self):
+        instance = FragmentContent([])
+        first, second, third = instance.re_match_groups(re.compile("<>"))
+        self.assertEqual(first, instance)
+        self.assertEqual(second, FragmentContent([]))
+        self.assertEqual(third, FragmentContent([]))
+
+    def test_re_match_groups_no_match(self):
+        instance = FragmentContent.create("Some test text")
+        first, second, third = instance.re_match_groups((re.compile("<>")))
+        self.assertEqual(first, instance)
+        self.assertEqual(second, FragmentContent([]))
+        self.assertEqual(third, FragmentContent([]))
+
+    def test_re_match_groups_single_match(self):
+        instance = FragmentContent.create("<>ds")
+        first, second, third = instance.re_match_groups((re.compile("<>")))
+        self.assertEqual(first, FragmentContent([Token("")]))
+        self.assertEqual(second, FragmentContent([Token("<>")]))
+        self.assertEqual(third, FragmentContent([Token("ds")]))
+
+    def test_re_match_groups_inter_token_match(self):
+        instance = FragmentContent([Token("<"), Token(">d"), Token("s")])
+        first, second, third = instance.re_match_groups((re.compile("<>")))
+        self.assertEqual(first, FragmentContent([Token("")]))
+        self.assertEqual(second, FragmentContent([Token("<"), Token(">")]))
+        self.assertEqual(third, FragmentContent([Token("d"), Token("s")]))
 
 if __name__ == '__main__':
     unittest.main()

@@ -96,19 +96,6 @@ class IOAnnots:
         return "IOAnnots(unfold={}, fails={}, filters={}, props={})".format(
             self.unfold, self.fails, self.filters, self.props)
 
-def _convert_contents_new_format(contents):
-    if isinstance(contents, str):
-        return [str]
-    else:
-        return contents
-
-def transform_contents_format(fragments):
-    for fr in fragments:
-        if isinstance(fr, Sentence):
-            yield fr._replace(contents=_convert_contents_new_format(fr.contents))
-        elif isinstance(fr, Text):
-            yield fr._replace(contents=_convert_contents_new_format(fr.contents))
-
 def _enrich_goal(g):
     return RichGoal(g.name,
                     RichCode(g.conclusion),
@@ -410,9 +397,9 @@ def strip_ids_and_props(obj, props):
 LEADING_BLANKS_RE = re.compile(r'\A([ \t]*(?:\n|\Z))?(.*?)([ \t]*)\Z',
                                flags=re.DOTALL)
 
-def isolate_blanks(txt):
+def isolate_blanks(contents: FragmentContent):
     """Split `txt` into blanks and an optional newline, text, and blanks."""
-    return LEADING_BLANKS_RE.match(str(txt)).groups()
+    return contents.re_match_groups(LEADING_BLANKS_RE) #LEADING_BLANKS_RE.match(str(txt)).groups()
 
 def group_whitespace_with_code(fragments):
     r"""Attach spaces to neighboring sentences.

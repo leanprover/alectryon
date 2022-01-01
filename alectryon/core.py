@@ -154,6 +154,8 @@ class Backend:
     def gen_names(self, names): raise NotImplementedError()
     def gen_code(self, code): raise NotImplementedError()
     def gen_txt(self, s): raise NotImplementedError()
+    def gen_token(self, token): raise NotImplementedError()
+    def gen_typeinfo(self, typeinfo): raise NotImplementedError()
 
     def highlight_enriched(self, obj):
         lang = obj.props.get("lang")
@@ -173,6 +175,10 @@ class Backend:
             self.gen_code(obj)
         elif isinstance(obj, Names):
             self.gen_names(obj)
+        elif isinstance(obj, Token):
+            self.gen_token(obj)
+        elif isinstance(obj, TypeInfo):
+            self.gen_typeinfo(obj)
         elif isinstance(obj, str):
             self.gen_txt(obj)
         else:

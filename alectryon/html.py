@@ -246,10 +246,19 @@ class HtmlGenerator(Backend):
 
     def gen_fragment(self, fr):
         if isinstance(fr, Text):
-            tags.span(self.highlight(fr.contents), cls="alectryon-wsp")
+            with tags.span(cls="alectryon-wsp"):
+                for token in fr.contents.tokens:
+                    self.gen_token(token)
         else:
             assert isinstance(fr, RichSentence)
             self.gen_sentence(fr)
+
+    def gen_token(self, token):
+        if token.link:
+            tags.a(self.highlight(token.raw), href=token.link)
+        else:
+            self.highlight(token.raw)
+
 
     @staticmethod
     def gen_ids(ids):

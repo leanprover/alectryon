@@ -399,7 +399,7 @@ LEADING_BLANKS_RE = re.compile(r'\A([ \t]*(?:\n|\Z))?(.*?)([ \t]*)\Z',
 
 def isolate_blanks(contents: FragmentContent):
     """Split `txt` into blanks and an optional newline, text, and blanks."""
-    return contents.re_match_groups(LEADING_BLANKS_RE) #LEADING_BLANKS_RE.match(str(txt)).groups()
+    return contents.re_match_groups(LEADING_BLANKS_RE)
 
 def group_whitespace_with_code(fragments):
     r"""Attach spaces to neighboring sentences.

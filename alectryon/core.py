@@ -525,6 +525,13 @@ class FragmentContent:
 
     # Replacement for repl.sub()
     def re_sub(self, repl: re, sub_token: [Token] = []):
+        """ Replacement method for repl.sub(str, str)
+
+        Substitutes all matches in the str of this fragment with the sub_tokens.
+        sub_tokens defaults to [] which equals removal of any match.
+
+        Returns a FragmentContent with substitute tokens.
+        """
         tokens = []
         last = FragmentContent(self.tokens)
         last_index = 0
@@ -543,9 +550,17 @@ class FragmentContent:
 
     # Replacement for repl.match().groups()
     def re_match_groups(self, repl: re):
+        """ Replacement method for repl.match(str).groups()
+
+        Executes match over the whole str of the FragmentContent and returns
+        the groups of this match as FragmentContent.
+
+        Method returns (prefix, center, suffix).
+        Returns None if there is no match.
+        """
         match = repl.match(str(self))
         if match is None:
-            return self, FragmentContent([]), FragmentContent([])
+            return None
         first_split = self.split_at_pos(match.start())
         last_split = first_split[1].split_at_pos(match.end())
         prefix = first_split[0]

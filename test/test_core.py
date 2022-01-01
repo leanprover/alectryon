@@ -152,17 +152,11 @@ class TestFragmentContent(unittest.TestCase):
     # re_match_groups
     def test_re_match_groups_empty(self):
         instance = FragmentContent([])
-        first, second, third = instance.re_match_groups(re.compile("<>"))
-        self.assertEqual(first, instance)
-        self.assertEqual(second, FragmentContent([]))
-        self.assertEqual(third, FragmentContent([]))
+        self.assertEqual(None, instance.re_match_groups(re.compile("<>")))
 
     def test_re_match_groups_no_match(self):
         instance = FragmentContent.create("Some test text")
-        first, second, third = instance.re_match_groups((re.compile("<>")))
-        self.assertEqual(first, instance)
-        self.assertEqual(second, FragmentContent([]))
-        self.assertEqual(third, FragmentContent([]))
+        self.assertEqual(None, instance.re_match_groups(re.compile("<>")))
 
     def test_re_match_groups_single_match(self):
         instance = FragmentContent.create("<>ds")

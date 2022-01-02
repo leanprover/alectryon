@@ -219,9 +219,7 @@ class HtmlGenerator(Backend):
                 self.gen_names([typeinfo.name])
                 with tags.span(cls="hyp-type"):
                     tags.b(": ")
-                    with tags.span():
-                        self.gen_code(typeinfo.type)
-                self.gen_mrefs(typeinfo)
+                    tags.span(typeinfo.type)
 
     @staticmethod
     def gen_txt(s):
@@ -254,7 +252,9 @@ class HtmlGenerator(Backend):
             self.gen_sentence(fr)
 
     def gen_token(self, token):
-        if token.link:
+        if token.typeinfo is not None:
+            self.gen_typeinfo(token.typeinfo)
+        if token.link is not None:
             tags.a(self.highlight(token.raw), href=token.link)
         else:
             self.highlight(token.raw)

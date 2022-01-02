@@ -67,13 +67,13 @@ Message = namedtuple("Message", "contents")
 TypeInfo = namedtuple("TypeInfo", "name type docstring")
 Sentence = namedtuple("Sentence", "contents messages goals")
 Text = namedtuple("Text", "contents")
-Token = namedtuple("Token", "raw typeinfo link", defaults=("", None, None))
+FragmentToken = namedtuple("Token", "raw typeinfo link", defaults=("", None, None))
 Fragment = Union[Text, Sentence]
 
 def update_contents_to_token_list(fragments: Iterable[Fragment]):
     ''' Compatibility method to replace str instances in Fragment.contents with new Token tuple:
 
-    >>> [Text(contents="abcd"), Text(contents=[Token(raw="xyz")])]
+    >>> [Text(contents="abcd"), Text(contents=[FragmentToken(raw="xyz")])]
     [Text(contents=FragmentContent([Token(raw="abcd")])), Text(contents=FragmentContent([Token(raw="abcd")]))]
     '''
     new_fragments = []
@@ -175,7 +175,7 @@ class Backend:
             self.gen_code(obj)
         elif isinstance(obj, Names):
             self.gen_names(obj)
-        elif isinstance(obj, Token):
+        elif isinstance(obj, FragmentToken):
             self.gen_token(obj)
         elif isinstance(obj, TypeInfo):
             self.gen_typeinfo(obj)
@@ -330,9 +330,9 @@ class Document:
     def split_fragment(fr: Fragment, cutoff):
         """Split `fr` at position `cutoff`.
 
-        >>> Document.split_fragment(Text(contents=[Token(raw='ab'), Token(raw='cx'), Token(raw='yz')]), 3)
+        >>> Document.split_fragment(Text(contents=[FragmentToken(raw='ab'), FragmentToken(raw='cx'), FragmentToken(raw='yz')]), 3)
         (Text(contents=[Token(raw='ab'), Token(raw='c')]), Text(contents=[Token(raw='x'), Token(raw='yz')]))
-        >>> Document.split_fragment(Sentence(contents=[Token(raw='ab'), Token(raw='cx'), Token(raw='yz')], [Message("out")], []), 3)
+        >>> Document.split_fragment(Sentence(contents=[FragmentToken(raw='ab'), FragmentToken(raw='cx'), FragmentToken(raw='yz')], [Message("out")], []), 3)
         (Sentence(contents=[Token(raw='ab'), Token(raw='c')], messages=[], goals=[]),
          Sentence(contents=[Token(raw='x'), Token(raw='yz')], messages=[Message(contents='out')], goals=[]))
         """
@@ -348,10 +348,10 @@ class Document:
     def split_fragments(cls, fragments, cutoffs):
         """Split `fragments` at positions `cutoffs`.
 
-        >>> list(Document.split_fragments([Text(contents=[Token(raw="abcdwxyz")])], [0, 2, 4, 5, 7]))
+        >>> list(Document.split_fragments([Text(contents=[FragmentToken(raw="abcdwxyz")])], [0, 2, 4, 5, 7]))
         [Text(contents=[Token(raw="ab")]), Text(contents=[Token(raw="cd")]),
          Text(contents=[Token(raw="w")]), Text(contents=[Token(raw="xy")]), Text(contents=[Token(raw="z")])]
-        >>> list(Document.split_fragments([Text(contents=[Token(raw="abcd")]), Text(contents=[Token(raw="wxyz")])], [0, 2, 4, 5, 7]))
+        >>> list(Document.split_fragments([Text(contents=[FragmentToken(raw="abcd")]), Text(contents=[FragmentToken(raw="wxyz")])], [0, 2, 4, 5, 7]))
         [Text(contents=[Token(raw="ab")]), Text(contents=[Token(raw="cd")]),
          Text(contents=[Token(raw="w")]), Text(contents=[Token(raw="xy")]), Text(contents=[Token(raw="z")])]
         """
@@ -443,16 +443,16 @@ Contents = namedtuple("Contents", "tokens")
 
 @dataclass(frozen=True)
 class FragmentContent:
-    tokens: list[Token]
+    tokens: list[FragmentToken]
 
     @staticmethod
     def create(val=[]):
         if isinstance(val, str):
             if val:
-                return FragmentContent([Token(val, None, None)])
+                return FragmentContent([FragmentToken(val, None, None)])
             else:
                 return FragmentContent([])
-        elif isinstance(val, Token):
+        elif isinstance(val, FragmentToken):
             if val.raw:
                 return FragmentContent([val])
             else:
@@ -465,7 +465,7 @@ class FragmentContent:
     def __add__(self, other):
         if isinstance(other, FragmentContent):
             return FragmentContent(self.tokens + other.tokens)
-        elif isinstance(other, Token):
+        elif isinstance(other, FragmentToken):
             if not other.raw:
                 return FragmentContent(self.tokens)
             return FragmentContent(self.tokens + [other])
@@ -501,8 +501,8 @@ class FragmentContent:
 
     def split_at_pos(self, cutoff: int):
         """Split the list of tokens at position `cutoff`
-        >>> Document.split_fragment_content([Token(raw='ab'), Token(raw='cx'), Token(raw='yz')], 3)
-        ([Token(raw='ab'), Token(raw='c')],[Token(raw='x'), Token(raw='yz')])
+        >>> Document.split_fragment_content([FragmentToken(raw='ab'), FragmentToken(raw='cx'), FragmentToken(raw='yz')], 3)
+        ([FragmentToken(raw='ab'), FragmentToken(raw='c')],[FragmentToken(raw='x'), FragmentToken(raw='yz')])
         """
         if cutoff < 0:
             cutoff = self.__len__() + cutoff
@@ -530,7 +530,7 @@ class FragmentContent:
         return self.__str__().endswith(string)
 
     # Replacement for repl.sub()
-    def re_sub(self, repl: re, sub_token: [Token] = []):
+    def re_sub(self, repl: re, sub_token: [FragmentToken] = []):
         """ Replacement method for repl.sub(str, str)
 
         Substitutes all matches in the str of this fragment with the sub_tokens.

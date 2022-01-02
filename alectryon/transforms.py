@@ -28,7 +28,7 @@ from copy import copy
 from collections import namedtuple
 
 from . import markers
-from .core import Fragment, FragmentContent, Sentence, Text, Token, Names, Enriched, \
+from .core import Fragment, FragmentContent, Sentence, Text, FragmentToken, Names, Enriched, \
     RichHypothesis, RichGoal, RichMessage, RichCode, \
     Goals, Messages, RichSentence, ALL_LANGUAGES
 
@@ -584,8 +584,8 @@ def find_long_lines(fragments, threshold):
     for fr in fragments:
         if hasattr(fr, "props") and not _enabled(fr):
             continue
-        prefix += Token("".join(getattr(fr, "prefixes", ())))
-        suffix = Token("".join(getattr(fr, "suffixes", ())))
+        prefix += FragmentToken("".join(getattr(fr, "prefixes", ())))
+        suffix = FragmentToken("".join(getattr(fr, "suffixes", ())))
         lines = FragmentContent(prefix.tokens + (_contents(fr) or FragmentContent([])).tokens + [suffix]).split_at_str("\n")
         yield from _check_line_lengths(lines, linum, threshold, len(lines) - 1)
         linum += len(lines) - 1

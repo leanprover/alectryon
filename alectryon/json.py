@@ -46,7 +46,8 @@ TYPE_OF_ALIASES = {
     "sentence": core.Sentence,
     "goals": core.Goals,
     "messages": core.Messages,
-    "token": core.Token,
+    "token": core.FragmentToken,
+    "typeinfo": core.TypeInfo,
     "contents": core.Contents,
     "rich_sentence": core.RichSentence
 }

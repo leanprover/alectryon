@@ -11,15 +11,15 @@ class TestFragmentContent(unittest.TestCase):
     def test_init_str(self):
         string = "test"
         instance = FragmentContent.create(string)
-        self.assertEqual(instance.tokens, [Token(string, None, None)])
+        self.assertEqual(instance.tokens, [FragmentToken(string, None, None)])
 
     def test_init_tokens(self):
-        tokens = [Token("test", None, None)]
+        tokens = [FragmentToken("test", None, None)]
         instance = FragmentContent.create(tokens)
         self.assertEqual(instance.tokens, tokens)
 
     def test_init_contents(self):
-        tokens = [Token("test", None, None)]
+        tokens = [FragmentToken("test", None, None)]
         instance = FragmentContent.create(tokens)
         second_instance = FragmentContent.create(Contents(tokens=tokens))
         self.assertEqual(second_instance, instance)
@@ -30,16 +30,16 @@ class TestFragmentContent(unittest.TestCase):
         self.assertEqual(instance, instance)
 
     def test_eq_similar(self):
-        tokens = [Token("1", None, None)]
+        tokens = [FragmentToken("1", None, None)]
         first_instance = FragmentContent.create(tokens)
         second_instance = FragmentContent.create(tokens)
         self.assertEqual(first_instance, second_instance)
 
     # __add__
     def test_add_self(self):
-        first_token = [Token("1", None, None)]
+        first_token = [FragmentToken("1", None, None)]
         first_instance = FragmentContent.create(first_token)
-        second_token = [Token("2", None, None)]
+        second_token = [FragmentToken("2", None, None)]
         second_instance = FragmentContent.create(second_token)
         sum_instance = first_instance + second_instance
         self.assertEqual(first_instance.tokens, first_token)
@@ -47,7 +47,7 @@ class TestFragmentContent(unittest.TestCase):
         self.assertEqual(sum_instance.tokens, first_token + second_token)
 
     def test_add_token(self):
-        tokens = [Token("First", None, None), Token("Test", None, None)]
+        tokens = [FragmentToken("First", None, None), FragmentToken("Test", None, None)]
         instance = FragmentContent.create(tokens[0])
         sum_instance = instance + tokens[1]
         self.assertEqual(sum_instance.tokens, tokens)
@@ -58,7 +58,7 @@ class TestFragmentContent(unittest.TestCase):
         self.assertEqual(str(instance), "")
 
     def test_str(self):
-        tokens = [Token("First", None, None), Token("Test", None, None)]
+        tokens = [FragmentToken("First", None, None), FragmentToken("Test", None, None)]
         instance = FragmentContent.create(tokens)
         self.assertEqual(str(instance), tokens[0].raw + tokens[1].raw)
 
@@ -68,7 +68,7 @@ class TestFragmentContent(unittest.TestCase):
         self.assertEqual(len(instance), 0)
 
     def test_len(self):
-        tokens = [Token("First", None, None), Token("Test", None, None)]
+        tokens = [FragmentToken("First", None, None), FragmentToken("Test", None, None)]
         instance = FragmentContent.create(tokens)
         self.assertEqual(len(instance), len(tokens[0].raw) + len(tokens[1].raw))
 
@@ -80,10 +80,10 @@ class TestFragmentContent(unittest.TestCase):
         self.assertEqual(len(splitted), 0)
 
     def test_empty_split_at_str(self):
-        tokens = [Token("First|"), Token("Te|st"), Token("Last")]
+        tokens = [FragmentToken("First|"), FragmentToken("Te|st"), FragmentToken("Last")]
         full_instance = FragmentContent.create(tokens)
         splitted = full_instance.split_at_str("|")
-        expected = [FragmentContent.create("First"), FragmentContent.create("Te"), FragmentContent.create([Token("st"), Token("Last")])]
+        expected = [FragmentContent.create("First"), FragmentContent.create("Te"), FragmentContent.create([FragmentToken("st"), FragmentToken("Last")])]
         self.assertEqual(expected, splitted)
 
     # split_at_pos
@@ -115,7 +115,7 @@ class TestFragmentContent(unittest.TestCase):
         self.assertEqual(instance.to_contents(), Contents([]))
 
     def test_to_contents(self):
-        tokens = [Token("First", None, None), Token("Test", None, None)]
+        tokens = [FragmentToken("First", None, None), FragmentToken("Test", None, None)]
         instance = FragmentContent(tokens)
         self.assertEqual(instance.to_contents(), Contents(tokens))
 
@@ -125,7 +125,7 @@ class TestFragmentContent(unittest.TestCase):
         self.assertFalse(instance.endswith("Test"))
 
     def test_endswith(self):
-        instance = FragmentContent([Token("Endsw"), Token("ith")])
+        instance = FragmentContent([FragmentToken("Endsw"), FragmentToken("ith")])
         self.assertTrue(instance.endswith("with"))
 
     # re_sub
@@ -134,19 +134,19 @@ class TestFragmentContent(unittest.TestCase):
         self.assertEqual(instance.re_sub(re.compile("<>")), instance)
 
     def test_re_sub(self):
-        instance = FragmentContent([Token("En<>ds"), Token("wi<>th")])
-        expected = FragmentContent([Token("En"), Token("ds"), Token("wi"), Token("th")])
+        instance = FragmentContent([FragmentToken("En<>ds"), FragmentToken("wi<>th")])
+        expected = FragmentContent([FragmentToken("En"), FragmentToken("ds"), FragmentToken("wi"), FragmentToken("th")])
         self.assertEqual(expected, instance.re_sub(re.compile("<>")))
 
     def test_re_sub_inter_token(self):
-        instance = FragmentContent([Token("Ends<"), Token(">with")])
-        expected = FragmentContent([Token("Ends"), Token("with")])
+        instance = FragmentContent([FragmentToken("Ends<"), FragmentToken(">with")])
+        expected = FragmentContent([FragmentToken("Ends"), FragmentToken("with")])
         self.assertEqual(instance.re_sub(re.compile("<>")), expected)
 
     def test_re_sub_token(self):
-        sub_token = [Token("SUB")]
-        instance = FragmentContent([Token("En<>ds"), Token("wi<>th")])
-        expected = FragmentContent([Token("En"), Token("SUB"), Token("ds"), Token("wi"), Token("SUB"), Token("th")])
+        sub_token = [FragmentToken("SUB")]
+        instance = FragmentContent([FragmentToken("En<>ds"), FragmentToken("wi<>th")])
+        expected = FragmentContent([FragmentToken("En"), FragmentToken("SUB"), FragmentToken("ds"), FragmentToken("wi"), FragmentToken("SUB"), FragmentToken("th")])
         self.assertEqual(expected, instance.re_sub(re.compile("<>"), sub_token))
 
     # re_match_groups
@@ -161,16 +161,16 @@ class TestFragmentContent(unittest.TestCase):
     def test_re_match_groups_single_match(self):
         instance = FragmentContent.create("<>ds")
         first, second, third = instance.re_match_groups((re.compile("<>")))
-        self.assertEqual(first, FragmentContent([Token("")]))
-        self.assertEqual(second, FragmentContent([Token("<>")]))
-        self.assertEqual(third, FragmentContent([Token("ds")]))
+        self.assertEqual(first, FragmentContent([FragmentToken("")]))
+        self.assertEqual(second, FragmentContent([FragmentToken("<>")]))
+        self.assertEqual(third, FragmentContent([FragmentToken("ds")]))
 
     def test_re_match_groups_inter_token_match(self):
-        instance = FragmentContent([Token("<"), Token(">d"), Token("s")])
+        instance = FragmentContent([FragmentToken("<"), FragmentToken(">d"), FragmentToken("s")])
         first, second, third = instance.re_match_groups((re.compile("<>")))
-        self.assertEqual(first, FragmentContent([Token("")]))
-        self.assertEqual(second, FragmentContent([Token("<"), Token(">")]))
-        self.assertEqual(third, FragmentContent([Token("d"), Token("s")]))
+        self.assertEqual(first, FragmentContent([FragmentToken("")]))
+        self.assertEqual(second, FragmentContent([FragmentToken("<"), FragmentToken(">")]))
+        self.assertEqual(third, FragmentContent([FragmentToken("d"), FragmentToken("s")]))
 
 if __name__ == '__main__':
     unittest.main()

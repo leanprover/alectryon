@@ -39,6 +39,12 @@ SOFTWARE.
     margin: 0;
 }
 
+.alectryon-io a {
+    text-decoration: none !important;
+    font-style: oblique !important;
+    color: unset;
+}
+
 /* Undo <small> and <blockquote>, added to improve RSS rendering. */
 
 .alectryon-io small.alectryon-output,

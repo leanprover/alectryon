@@ -70,17 +70,6 @@ Text = namedtuple("Text", "contents")
 FragmentToken = namedtuple("Token", "raw typeinfo link", defaults=("", None, None))
 Fragment = Union[Text, Sentence]
 
-def update_contents_to_token_list(fragments: Iterable[Fragment]):
-    ''' Compatibility method to replace str instances in Fragment.contents with new Token tuple:
-
-    >>> [Text(contents="abcd"), Text(contents=[FragmentToken(raw="xyz")])]
-    [Text(contents=FragmentContent([Token(raw="abcd")])), Text(contents=FragmentContent([Token(raw="abcd")]))]
-    '''
-    new_fragments = []
-    for fragment in fragments:
-        new_fragments.append(fragment._replace(contents=FragmentContent.create(fragment.contents)))
-    return new_fragments
-
 class Enriched():
     def __new__(cls, *args, **kwargs):
         if len(args) < len(getattr(super(), "_fields", ())):

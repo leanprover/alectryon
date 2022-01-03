@@ -214,12 +214,14 @@ class HtmlGenerator(Backend):
     @deduplicate(".alectryon-type-info")
     def gen_typeinfo(self, typeinfo):
         cls = "alectryon-type-info"
-        with tags.small(cls=cls).add(tags.div()):
-            with tags.span():
-                self.gen_names([typeinfo.name])
-                with tags.span(cls="hyp-type"):
-                    tags.b(": ")
-                    tags.span(typeinfo.type)
+        with tags.div(cls="alectryon-type-info-wrapper"):
+            with tags.small(cls=cls).add(tags.div(cls="alectryon-goals")):
+                with tags.blockquote(cls="alectryon-goal"):
+                    with tags.div(cls="goal-hyps"):
+                        with tags.span(cls="hyp-type"):
+                            self.gen_names([typeinfo.name])
+                            tags.b(": ")
+                            tags.span(typeinfo.type)
 
     @staticmethod
     def gen_txt(s):

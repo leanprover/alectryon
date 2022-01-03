@@ -828,16 +828,12 @@ def transform_contents_to_tokens(fragments):
     """
     new_fragments = []
     for fragment in fragments:
-        if isinstance(fragment.contents, str):
-            new_fragments.append(fragment._replace(contents=FragmentContent.create(fragment.contents)))
-        else:
-            new_fragments.append(fragment)
+        new_fragments.append(fragment._replace(contents=FragmentContent.create(fragment.contents)))
     return new_fragments
 
 
 DEFAULT_TRANSFORMS = {
     "coq": [
-        transform_contents_to_tokens,
         enrich_sentences,
         attach_comments_to_code("coq"),
         group_hypotheses,
@@ -847,7 +843,6 @@ DEFAULT_TRANSFORMS = {
         dedent,
     ],
     "lean3": [
-        transform_contents_to_tokens,
         lean3_attach_commas,
         lean3_split_comments,
         coalesce_text,
@@ -859,9 +854,9 @@ DEFAULT_TRANSFORMS = {
         process_io_annots
     ],
     "lean4": [
+        transform_contents_to_tokens,
         lean4_trim_sentences,
         lean4_transform_whitespace_to_text,
-        transform_contents_to_tokens,
         coalesce_text,
         enrich_sentences,
         group_hypotheses,

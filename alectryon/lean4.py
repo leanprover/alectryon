@@ -26,7 +26,8 @@ from pathlib import Path
 from alectryon import json
 
 from alectryon.json import PlainSerializer
-from .core import CLIDriver, EncodedDocument, FragmentContent, indent, Text, FragmentToken, update_contents_to_token_list
+from .core import CLIDriver, EncodedDocument, FragmentContent, indent, Text, FragmentToken
+from .transforms import transform_contents_to_tokens
 
 class Lean4(CLIDriver):
     BIN = "leanInk"
@@ -82,7 +83,7 @@ class Lean4(CLIDriver):
     def annotate(self, chunks):
         document = EncodedDocument(chunks, "\n", encoding="utf-8")
         self.resolve_lake_arg()
-        result = self.run_leanink_document(document)
+        result = transform_contents_to_tokens(self.run_leanink_document(document))
 
         if not result:
             return list([])

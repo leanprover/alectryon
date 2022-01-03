@@ -227,7 +227,8 @@ In any case, make an exception for comments:
     }
 
     .alectryon-io .alectryon-sentence:hover .alectryon-output,
-    .alectryon-io .alectryon-sentence:hover .alectryon-type-info {
+    .alectryon-io .alectryon-sentence:hover .alectryon-type-info-wrapper,
+    .alectryon-io .alectryon-wsp:hover .alectryon-type-info-wrapper {
         z-index: 2; /* Place hovered goals above .alectryon-sentence.alectryon-target ones */
     }
 }
@@ -262,20 +263,31 @@ In any case, make an exception for comments:
     z-index: 1; /* Default to an index lower than that used by :hover */
 }
 
-.alectryon-io .alectryon-type-info {
+.alectryon-io .alectryon-sentence .alectryon-type-info-wrapper,
+.alectryon-io .alectryon-wsp .alectryon-type-info-wrapper {
+    position: absolute;
+    display: inline-block;
+}
+
+.alectryon-io .alectryon-type-info-wrapper .alectryon-type-info {
     box-sizing: border-box;
-    display: none;
+    left: 50%;
     bottom: 100%;
     position: absolute;
     padding: 0.25em 0;
+    visibility: hidden;
     overflow: visible; /* Let box-shadows overflow */
     z-index: 1; /* Default to an index lower than that used by :hover */
 }
 
 @media (any-hover: hover) { /* See note above about this @media query */
-    .alectryon-io .alectryon-sentence:hover .alectryon-output:not(:hover),
-    .alectryon-io .alectryon-sentence:hover .alectryon-type-info::not(:hover) {
+    .alectryon-io .alectryon-sentence:hover .alectryon-output:not(:hover) {
         display: block;
+    }
+
+    .alectryon-io .alectryon-sentence:hover .alectryon-type-info-wrapper .alectryon-type-info,
+    .alectryon-io .alectryon-wsp:hover .alectryon-type-info-wrapper .alectryon-type-info {
+        visibility: visible;
     }
 }
 

@@ -278,6 +278,7 @@ In any case, make an exception for comments:
     visibility: hidden;
     overflow: visible; /* Let box-shadows overflow */
     z-index: 1; /* Default to an index lower than that used by :hover */
+    white-space: pre !important;
 }
 
 @media (any-hover: hover) { /* See note above about this @media query */

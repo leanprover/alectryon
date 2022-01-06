@@ -61,6 +61,9 @@ HEADER = (
     'Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. '
     'Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. '
     'On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.'
+    '<br>Hover-Settings:'
+    ' Show types:<input id="toggleswitch" type="checkbox" onClick="toggleShowTypes(this);" checked>'
+    ' Show goals:<input id="toggleswitch" type="checkbox" onClick="toggleShowGoals(this);" checked><br>'
     '</div>'
 )
 
@@ -211,7 +214,7 @@ class HtmlGenerator(Backend):
                     assert output.goals, "transforms.commit_io_annotations"
                     self.gen_goals(output.goals)
 
-    @deduplicate(".alectryon-type-info")
+    @deduplicate(".alectryon-type-info-wrapper")
     def gen_typeinfo(self, typeinfo):
         with tags.div(cls="alectryon-type-info-wrapper"):
             with tags.small(cls="alectryon-type-info").add(tags.div(cls="alectryon-goals")):

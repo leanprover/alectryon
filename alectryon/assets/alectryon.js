@@ -170,3 +170,25 @@ var Alectryon;
         styles.setStyle = setStyle;
     })(Alectryon.styles || (Alectryon.styles = {}));
 })(Alectryon || (Alectryon = {}));
+
+function toggleShowTypes(checkbox) {
+    let popups = document.getElementsByClassName("alectryon-type-info")
+    for (let i = 0; i < popups.length; i++) {
+        if (checkbox.checked) {
+            popups[i].classList.remove("hidden")
+        } else {
+            popups[i].classList.add("hidden")
+        }
+    }
+}
+
+function toggleShowGoals(checkbox) {
+    let popups = document.getElementsByClassName("alectryon-output")
+    for (let i = 0; i < popups.length; i++) {
+        if (checkbox.checked) {
+            popups[i].classList.remove("hidden")
+        } else {
+            popups[i].classList.add("hidden")
+        }
+    }
+}

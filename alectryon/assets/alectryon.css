@@ -286,6 +286,15 @@ In any case, make an exception for comments:
         display: block;
     }
 
+    .alectryon-io .alectryon-sentence:hover .alectryon-output.hidden:not(:hover) {
+        display: none !important;
+    }
+
+    .alectryon-io .alectryon-sentence:hover .alectryon-type-info-wrapper .alectryon-type-info.hidden,
+    .alectryon-io .alectryon-wsp:hover .alectryon-type-info-wrapper .alectryon-type-info.hidden {
+        visibility: hidden !important;
+    }
+
     .alectryon-io .alectryon-sentence:hover .alectryon-type-info-wrapper .alectryon-type-info,
     .alectryon-io .alectryon-wsp:hover .alectryon-type-info-wrapper .alectryon-type-info {
         visibility: visible;

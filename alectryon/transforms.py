@@ -817,10 +817,6 @@ def lean4_transform_whitespace_to_text(fragments):
             transformed.append(fr)
     return transformed
 
-def eval_debug_transform(fragments):
-    # Breakpoint
-    return fragments
-
 def transform_contents_to_tokens(fragments):
     """ Compatibility method to replace str instances in Fragment.contents with new Token tuple:
     >>> [Text(contents="abcd"), Text(contents=[FragmentToken(raw="xyz")])]
@@ -867,8 +863,7 @@ DEFAULT_TRANSFORMS = {
         enrich_sentences,
         group_hypotheses,
         read_io_comments("lean4"),
-        process_io_annots,
-        eval_debug_transform
+        process_io_annots
     ],
     # Not included:
     #   group_whitespace_with_code (HTML-specific)

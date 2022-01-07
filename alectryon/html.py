@@ -214,17 +214,6 @@ class HtmlGenerator(Backend):
                     assert output.goals, "transforms.commit_io_annotations"
                     self.gen_goals(output.goals)
 
-    @deduplicate(".alectryon-type-info-wrapper")
-    def gen_typeinfo(self, typeinfo):
-        with tags.div(cls="alectryon-type-info-wrapper"):
-            with tags.small(cls="alectryon-type-info").add(tags.div(cls="alectryon-goals")):
-                with tags.blockquote(cls="alectryon-goal"):
-                    with tags.div(cls="goal-hyps"):
-                        with tags.span(cls="hyp-type"):
-                            self.gen_names([typeinfo.name])
-                            tags.b(": ")
-                            tags.span(typeinfo.type)
-
     @staticmethod
     def gen_txt(s):
         return txt(s)
@@ -259,24 +248,33 @@ class HtmlGenerator(Backend):
         for token in tokens:
             self.gen_token(token)
 
+    @deduplicate(".alectryon-type-info-wrapper")
+    def gen_typeinfo(self, typeinfo):
+        with tags.div(cls="alectryon-type-info-wrapper"):
+            with tags.small(cls="alectryon-type-info").add(tags.div(cls="alectryon-goals")):
+                with tags.blockquote(cls="alectryon-goal"):
+                    with tags.div(cls="goal-hyps"):
+                        with tags.span(cls="hyp-type"):
+                            self.gen_names([typeinfo.name])
+                            tags.b(": ")
+                            tags.span(typeinfo.type)
+                    if typeinfo.docstring is not None:
+                        tags.span(cls="goal-separator")
+                        tags.span(typeinfo.docstring)
+
     def gen_token(self, token):
         if token.typeinfo is not None:
-            with tags.div(cls="alectryon-type-info-wrapper"):
-                with tags.small(cls="alectryon-type-info").add(tags.div(cls="alectryon-goals")):
-                    with tags.blockquote(cls="alectryon-goal"):
-                        with tags.div(cls="goal-hyps"):
-                            with tags.span(cls="hyp-type"):
-                                self.gen_names([token.typeinfo.name])
-                                tags.b(": ")
-                                tags.span(token.typeinfo.type)
-                        if token.typeinfo.docstring is not None:
-                            tags.span(cls="goal-separator")
-                            tags.span(token.typeinfo.docstring)
-        if token.link is not None:
-            tags.a(self.highlight(token.raw), href=token.link)
+            with tags.div(cls="alectryon-token"):
+                self.gen_typeinfo(token.typeinfo)
+                if token.link is not None:
+                    tags.a(self.highlight(token.raw), href=token.link)
+                else:
+                    self.highlight(token.raw)
         else:
-            self.highlight(token.raw)
-
+            if token.link is not None:
+                tags.a(self.highlight(token.raw), href=token.link)
+            else:
+                self.highlight(token.raw)
 
     @staticmethod
     def gen_ids(ids):

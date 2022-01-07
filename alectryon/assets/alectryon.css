@@ -160,6 +160,11 @@ In any case, make an exception for comments:
     padding: 0.1em 0; /* Enlarge the hitbox slightly to fill interline gaps */
 }
 
+.alectryon-io .alectryon-token {
+    white-space: pre;
+    display: inline;
+}
+
 .alectryon-io .alectryon-sentence.alectryon-target .alectryon-input {
     /* FIXME if keywords were ‘bolder’ we wouldn't need !important */
     font-weight: bold !important; /* Use !important to avoid a * selector */
@@ -227,8 +232,8 @@ In any case, make an exception for comments:
     }
 
     .alectryon-io .alectryon-sentence:hover .alectryon-output,
-    .alectryon-io .alectryon-sentence:hover .alectryon-type-info-wrapper,
-    .alectryon-io .alectryon-wsp:hover .alectryon-type-info-wrapper {
+    .alectryon-io .alectryon-token:hover .alectryon-type-info-wrapper,
+    .alectryon-io .alectryon-token:hover .alectryon-type-info-wrapper {
         z-index: 2; /* Place hovered goals above .alectryon-sentence.alectryon-target ones */
     }
 }
@@ -290,13 +295,17 @@ In any case, make an exception for comments:
         display: none !important;
     }
 
-    .alectryon-io .alectryon-sentence:hover .alectryon-type-info-wrapper .alectryon-type-info.hidden,
-    .alectryon-io .alectryon-wsp:hover .alectryon-type-info-wrapper .alectryon-type-info.hidden {
+    .alectryon-io .alectryon-token:hover {
+        background-color: rgb(233, 255, 34);
+    }
+
+    .alectryon-io .alectryon-token:hover .alectryon-type-info-wrapper .alectryon-type-info.hidden,
+    .alectryon-io .alectryon-token:hover .alectryon-type-info-wrapper .alectryon-type-info.hidden {
         visibility: hidden !important;
     }
 
-    .alectryon-io .alectryon-sentence:hover .alectryon-type-info-wrapper .alectryon-type-info,
-    .alectryon-io .alectryon-wsp:hover .alectryon-type-info-wrapper .alectryon-type-info {
+    .alectryon-io .alectryon-token:hover .alectryon-type-info-wrapper .alectryon-type-info,
+    .alectryon-io .alectryon-token:hover .alectryon-type-info-wrapper .alectryon-type-info {
         visibility: visible;
     }
 }

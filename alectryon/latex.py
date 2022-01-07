@@ -234,7 +234,7 @@ class LatexGenerator(Backend):
     def gen_input(self, fr):
         with environments.input(verbatim=True):
             self.gen_whitespace(fr.prefixes)
-            self.gen_code(fr.input)
+            self.gen_code(str(fr.input))
             # In HTML this space is hidden dynamically when the outputs are
             # visible; in LaTeX we hide it statically.  Hiding these spaces
             # makes our lives easier because we can unconditionally add a line
@@ -272,7 +272,7 @@ class LatexGenerator(Backend):
     def gen_fragment(self, fr):
         if isinstance(fr, Text):
             if fr.contents:
-                environments.txt(*self.highlight(fr.contents), verbatim=True)
+                environments.txt(*self.highlight(str(fr.contents)), verbatim=True)
         else:
             assert isinstance(fr, RichSentence)
             self.gen_sentence(fr)

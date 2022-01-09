@@ -268,15 +268,24 @@ In any case, make an exception for comments:
     z-index: 1; /* Default to an index lower than that used by :hover */
 }
 
-.alectryon-io .alectryon-sentence .alectryon-type-info-wrapper,
-.alectryon-io .alectryon-wsp .alectryon-type-info-wrapper {
+.alectryon-io .alectryon-type-info-wrapper {
     position: absolute;
     display: inline-block;
 }
 
+.alectryon-io .alectryon-type-info-wrapper.full-width {
+    left: 0%;
+    min-width: 100%;
+    max-width: 100%;
+}
+
+.alectryon-io .alectryon-type-info .goal-separator {
+    height: unset;
+    margin-top: 0em;
+}
+
 .alectryon-io .alectryon-type-info-wrapper .alectryon-type-info {
     box-sizing: border-box;
-    left: 50%;
     bottom: 100%;
     position: absolute;
     padding: 0.25em 0;
@@ -296,7 +305,7 @@ In any case, make an exception for comments:
     }
 
     .alectryon-io .alectryon-token:hover {
-        background-color: rgb(233, 255, 34);
+        font-weight: bold !important;
     }
 
     .alectryon-io .alectryon-token:hover .alectryon-type-info-wrapper .alectryon-type-info.hidden,

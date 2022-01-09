@@ -62,7 +62,7 @@ HEADER = (
     'Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. '
     'On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.'
     '<br>Hover-Settings:'
-    ' Show types:<input id="toggleswitch" type="checkbox" onClick="toggleShowTypes(this);" checked>'
+    ' Show types:<input id="toggleswitch" type="checkbox" onClick="toggleShowTypes(this);">'
     ' Show goals:<input id="toggleswitch" type="checkbox" onClick="toggleShowGoals(this);" checked><br>'
     '</div>'
 )
@@ -190,7 +190,8 @@ class HtmlGenerator(Backend):
 
     def gen_input(self, fr, toggle):
         cls = "alectryon-input" + (" alectryon-failed" if fr.annots.fails else "")
-        with self.gen_clickable(toggle, cls, self.highlight_enriched(fr.input)):
+        with self.gen_clickable(toggle, cls):
+            self.highlight_enriched(fr.input)
             self.gen_mrefs(fr)
             self.gen_mrefs(fr.input)
 
@@ -238,8 +239,7 @@ class HtmlGenerator(Backend):
     def gen_fragment(self, fr):
         if isinstance(fr, Text):
             with tags.span(cls="alectryon-wsp"):
-                for token in fr.contents.tokens:
-                    self.gen_token(token)
+                self.gen_tokens(fr.contents.tokens)
         else:
             assert isinstance(fr, RichSentence)
             self.gen_sentence(fr)
@@ -250,17 +250,19 @@ class HtmlGenerator(Backend):
 
     @deduplicate(".alectryon-type-info-wrapper")
     def gen_typeinfo(self, typeinfo):
-        with tags.div(cls="alectryon-type-info-wrapper"):
-            with tags.small(cls="alectryon-type-info").add(tags.div(cls="alectryon-goals")):
+        base_cls = "alectryon-type-info-wrapper"
+        cls = base_cls if typeinfo.docstring is None else base_cls + " full-width"
+        with tags.div(cls=cls):
+            with tags.small(cls="alectryon-type-info hidden").add(tags.div(cls="alectryon-goals")):
                 with tags.blockquote(cls="alectryon-goal"):
                     with tags.div(cls="goal-hyps"):
                         with tags.span(cls="hyp-type"):
                             self.gen_names([typeinfo.name])
                             tags.b(": ")
                             tags.span(typeinfo.type)
-                    if typeinfo.docstring is not None:
-                        tags.span(cls="goal-separator")
-                        tags.span(typeinfo.docstring)
+                if typeinfo.docstring is not None:
+                    tags.span(cls="goal-separator")
+                    tags.blockquote(typeinfo.docstring, cls="alectryon-goal")
 
     def gen_token(self, token):
         if token.typeinfo is not None:

@@ -274,7 +274,7 @@ In any case, make an exception for comments:
 }
 
 .alectryon-io .alectryon-type-info-wrapper.full-width {
-    left: 0%;
+    left: 0;
     min-width: 100%;
     max-width: 100%;
 }
@@ -295,6 +295,10 @@ In any case, make an exception for comments:
     white-space: pre !important;
 }
 
+.alectryon-io .alectryon-type-info-wrapper .alectryon-type-info .alectryon-goal.alectryon-docstring {
+    white-space: pre-wrap !important;
+}
+
 @media (any-hover: hover) { /* See note above about this @media query */
     .alectryon-io .alectryon-sentence:hover .alectryon-output:not(:hover) {
         display: block;
@@ -302,10 +306,6 @@ In any case, make an exception for comments:
 
     .alectryon-io .alectryon-sentence:hover .alectryon-output.hidden:not(:hover) {
         display: none !important;
-    }
-
-    .alectryon-io .alectryon-token:hover {
-        font-weight: bold !important;
     }
 
     .alectryon-io .alectryon-token:hover .alectryon-type-info-wrapper .alectryon-type-info.hidden,

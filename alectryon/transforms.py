@@ -701,7 +701,6 @@ def isolate_coqdoc(fragments):
 
 SURROUNDING_BLANKS_RE = re.compile(r"\A(\s*)(.*?)(\s*)\Z", re.DOTALL)
 
-
 def split_surrounding_space(fr):
     before, txt, after = SURROUNDING_BLANKS_RE.match(_contents(fr)).groups()
     if before: yield Text(before)

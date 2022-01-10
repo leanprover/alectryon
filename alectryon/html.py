@@ -248,31 +248,30 @@ class HtmlGenerator(Backend):
         for token in tokens:
             self.gen_token(token)
 
-    @deduplicate(".alectryon-type-info-wrapper")
     def gen_typeinfo(self, typeinfo):
-        base_cls = "alectryon-type-info-wrapper"
-        cls = base_cls if typeinfo.docstring is None else base_cls + " full-width"
-        with tags.div(cls=cls):
-            with tags.small(cls="alectryon-type-info hidden").add(tags.div(cls="alectryon-goals")):
-                with tags.blockquote(cls="alectryon-goal"):
-                    with tags.div(cls="goal-hyps"):
-                        with tags.span(cls="hyp-type"):
-                            self.gen_names([typeinfo.name])
-                            tags.b(": ")
-                            tags.span(typeinfo.type)
-                if typeinfo.docstring is not None:
-                    tags.span(cls="goal-separator")
-                    tags.blockquote(typeinfo.docstring, cls="alectryon-goal")
+        with tags.blockquote(cls="alectryon-goal"):
+            with tags.div(cls="goal-hyps"):
+                with tags.span(cls="hyp-type"):
+                    self.gen_names([typeinfo.name])
+                    tags.b(": ")
+                    tags.span(typeinfo.type)
+
+    def gen_docstring(self, docstring):
+        tags.blockquote(docstring, cls="alectryon-goal alectryon-docstring")
 
     def gen_token(self, token):
-        if token.typeinfo is not None:
-            with tags.div(cls="alectryon-token"):
-                self.gen_typeinfo(token.typeinfo)
-                if token.link is not None:
-                    tags.a(self.highlight(token.raw), href=token.link)
-                else:
-                    self.highlight(token.raw)
-        else:
+        with tags.div(cls="alectryon-token"):
+            if (token.typeinfo is not None) or (token.docstring is not None):
+                base_cls = "alectryon-type-info-wrapper"
+                cls = base_cls if token.docstring is None else base_cls + " full-width"
+                with tags.div(cls=cls):
+                    with tags.small(cls="alectryon-type-info hidden").add(tags.div(cls="alectryon-goals")):
+                        if token.typeinfo is not None:
+                            self.gen_typeinfo(token.typeinfo)
+                            if token.docstring is not None:
+                                tags.span(cls="goal-separator")
+                        if token.docstring is not None:
+                            self.gen_docstring(token.docstring)
             if token.link is not None:
                 tags.a(self.highlight(token.raw), href=token.link)
             else:

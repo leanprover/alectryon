@@ -64,10 +64,10 @@ class DriverInfo(namedtuple("DriverInfo", "name version")):
 Hypothesis = namedtuple("Hypothesis", "names body type")
 Goal = namedtuple("Goal", "name conclusion hypotheses")
 Message = namedtuple("Message", "contents")
-TypeInfo = namedtuple("TypeInfo", "name type docstring")
+TypeInfo = namedtuple("TypeInfo", "name type")
 Sentence = namedtuple("Sentence", "contents messages goals")
 Text = namedtuple("Text", "contents")
-FragmentToken = namedtuple("Token", "raw typeinfo link", defaults=("", None, None))
+FragmentToken = namedtuple("Token", "raw typeinfo docstring link", defaults=("", None, None, None))
 Fragment = Union[Text, Sentence]
 
 class Enriched():

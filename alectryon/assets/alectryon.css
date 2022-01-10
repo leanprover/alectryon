@@ -161,7 +161,7 @@ In any case, make an exception for comments:
 }
 
 .alectryon-io .alectryon-token {
-    white-space: pre;
+    white-space: pre-wrap;
     display: inline;
 }
 

@@ -448,7 +448,7 @@ COQ_BULLET = re.compile(r"\A\s*[-+*]+\s*\Z")
 def is_coq_bullet(fr):
     return COQ_BULLET.match(str(fr.input.contents))
 
-def _attach_comments_to_code(lang, fragments, predicate=lambda _: True):
+def _attach_comments_to_code(lang, fragments, predicate=lambda _: True): # TODO: Check Support FragmentContents
     """Attach comments immediately following a sentence to the sentence itself.
 
     This is to support this common pattern::
@@ -481,8 +481,8 @@ def _attach_comments_to_code(lang, fragments, predicate=lambda _: True):
         prev = grouped[idx - 1] if idx > 0 else None
         prev_is_sentence = isinstance(prev, RichSentence)
         if prev_is_sentence and predicate(prev) and isinstance(fr, Text):
-            best = prefix = StringView(fr.contents, 0, 0)
-            for part in partition(lang, fr.contents):
+            best = prefix = StringView(str(fr.contents), 0, 0)
+            for part in partition(lang, str(fr.contents)):
                 if "\n" in part.v:
                     break
                 if isinstance(part, Code):
@@ -491,9 +491,11 @@ def _attach_comments_to_code(lang, fragments, predicate=lambda _: True):
                 if isinstance(part, Comment):
                     best = prefix
             if best:
-                rest = fr.contents[len(best):]
-                grouped[idx - 1] = _replace_contents(prev, _contents(prev) + str(best))
-                grouped[idx] = Text(rest) if rest else None
+                split = fr.contents.split_at_pos(len(best))
+                token_best = split[0]
+                token_rest = split[1]
+                grouped[idx - 1] = _replace_contents(prev, _contents(prev) + token_best)
+                grouped[idx] = Text(token_rest) if str(token_rest) else None
     return [g for g in grouped if g is not None]
 
 def attach_comments_to_code(lang_name):
@@ -611,9 +613,9 @@ def partition_fragments(fragments, delim=COQ_CHUNK_DELIMITER):
     partitioned = [[]]
     for fr in fragments:
         if isinstance(fr, Text):
-            m = delim.search(fr.contents)
+            m = delim.search(str(fr.contents))
             if m:
-                before, after = fr.contents[:m.start()], fr.contents[m.end():]
+                before, after = fr.contents.split_at_pos(m.start())[0], fr.contents.split_at_pos(m.end())[1]
                 if before:
                     partitioned[-1].append(Text(before))
                 if partitioned[-1]:
@@ -630,13 +632,13 @@ RBLANKS = re.compile(r"(\n[ \t]*)+\Z")
 def strip_text(fragments):
     for idx, fr in enumerate(fragments):
         if isinstance(fr, Text):
-            fragments[idx] = fr = Text(contents=LBLANKS.sub("", fr.contents))
+            fragments[idx] = fr = Text(contents=fr.contents.re_sub(LBLANKS))
             if not fr.contents:
                 continue
         break
     for idx, fr in reversed(list(enumerate(fragments))):
         if isinstance(fr, Text):
-            fragments[idx] = fr = Text(contents=RBLANKS.sub("", fr.contents))
+            fragments[idx] = fr = Text(contents=fr.contents.re_sub(RBLANKS))
             if not fr.contents:
                 continue
         break
@@ -681,7 +683,7 @@ def isolate_coqdoc(fragments):
     refined = []
     for fr in fragments:
         if isinstance(fr, Text):
-            for span in partition_literate(COQ, fr.contents, opener=COQDOC_OPEN):
+            for span in partition_literate(COQ, str(fr.contents), opener=COQDOC_OPEN):
                 wrapper = CoqdocFragment if isinstance(span, Comment) else Text
                 refined.append(wrapper(str(span.v)))
         else:
@@ -702,7 +704,7 @@ def isolate_coqdoc(fragments):
 SURROUNDING_BLANKS_RE = re.compile(r"\A(\s*)(.*?)(\s*)\Z", re.DOTALL)
 
 def split_surrounding_space(fr):
-    before, txt, after = SURROUNDING_BLANKS_RE.match(_contents(fr)).groups()
+    before, txt, after = _contents(fr).re_match_groups(SURROUNDING_BLANKS_RE)
     if before: yield Text(before)
     if txt: yield _replace_contents(fr, txt)
     if after: yield Text(after)
@@ -720,11 +722,11 @@ def lean3_split_comments(fragments):
     from .literate import LEAN3, partition, Code, Comment
     for fr in fragments:
         if isinstance(fr, Text):
-            for part in partition(LEAN3, fr.contents):
+            for part in partition(LEAN3, str(fr.contents)): # TODO: Improve support for FragmentContent
                 if isinstance(part, Code):
-                    yield from split_surrounding_space(Sentence(str(part.v), [], []))
+                    yield from split_surrounding_space(Sentence(FragmentContent.create(str(part.v)), [], []))
                 if isinstance(part, Comment):
-                    yield from split_surrounding_space(Text(str(part.v)))
+                    yield from split_surrounding_space(Text(FragmentContent.create(str(part.v))))
         else:
             yield fr
 
@@ -745,11 +747,12 @@ def lean3_truncate_vernacs(fragments):
     for fr in fragments:
         # Check that `fr` is a ‘#xyz’ vernac starting at the beginning of a line
         contents = _contents(fr)
-        if isinstance(fr, (Sentence, RichSentence)) and LEAN_VERNAC_RE.match(contents):
-            m = LEAN_TRAILING_BLANKS_RE.search(contents)
+        if isinstance(fr, (Sentence, RichSentence)) and LEAN_VERNAC_RE.match(str(contents)):
+            m = LEAN_TRAILING_BLANKS_RE.search(str(contents))
             if m:
-                yield _replace_contents(fr, contents[:m.start()])
-                fr = Text(contents[m.start():])
+                split = contents.split_at_pos(m.start())
+                yield _replace_contents(fr, split[0])
+                fr = Text(split[1])
         yield fr
 
 LEAN_COMMA_RE = re.compile(r'\A\s*,')
@@ -764,11 +767,12 @@ def lean3_attach_commas(fragments):
     grouped = list(fragments)
     for idx, fr in enumerate(grouped):
         if isinstance(fr, Text) and idx > 0:
-            m = LEAN_COMMA_RE.match(fr.contents)
+            m = LEAN_COMMA_RE.match(str(fr.contents))
             if m and not isinstance(grouped[idx - 1], Text):
                 prev = grouped[idx-1]
-                comma, rest = fr.contents[:m.end()], fr.contents[m.end():]
-                grouped[idx-1] = _replace_contents(prev, _contents(prev) + comma)
+                split = fr.contents.split_at_pos(m.end())
+                comma, rest = split[0], split[1]
+                grouped[idx-1] = _replace_contents(prev, _contents(prev) + FragmentContent.create(comma))
                 grouped[idx] = Text(rest) if rest else None
     return [g for g in grouped if g is not None]
 

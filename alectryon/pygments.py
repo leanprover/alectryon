@@ -38,7 +38,7 @@ from pygments.lexers import get_lexer_by_name # pylint: disable=no-name-in-modul
 
 from dominate.util import raw as dom_raw
 
-from .pygments_lexer import CoqLexer
+from .pygments_lexer import CoqLexer, Lean4Lexer
 from .pygments_style import AlectryonStyle
 
 def resolve_token(kind):
@@ -48,7 +48,7 @@ def resolve_token(kind):
         raise ValueError("Unknown token kind: {}".format(kind))
     return tokentype
 
-CUSTOM_LEXERS = {'CoqLexer': CoqLexer}
+CUSTOM_LEXERS = {'CoqLexer': CoqLexer, 'Lean4Lexer': Lean4Lexer}
 CUSTOM_LEXER_ALIASES: Dict[str, str] = {
     "lean3": "lean",
     "lean4": "lean"

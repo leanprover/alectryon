@@ -304,12 +304,12 @@ In any case, make an exception for comments:
         display: block;
     }
 
-    .alectryon-io .alectryon-sentence:hover .alectryon-output.hidden:not(:hover) {
+    .alectryon-io.output-hidden .alectryon-sentence:hover .alectryon-output:not(:hover) {
         display: none !important;
     }
 
-    .alectryon-io .alectryon-token:hover .alectryon-type-info-wrapper .alectryon-type-info.hidden,
-    .alectryon-io .alectryon-token:hover .alectryon-type-info-wrapper .alectryon-type-info.hidden {
+    .alectryon-io.type-info-hidden .alectryon-token:hover .alectryon-type-info-wrapper .alectryon-type-info,
+    .alectryon-io.type-info-hidden .alectryon-token:hover .alectryon-type-info-wrapper .alectryon-type-info {
         visibility: hidden !important;
     }
 

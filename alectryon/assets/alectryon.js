@@ -171,20 +171,20 @@ var Alectryon;
     })(Alectryon.styles || (Alectryon.styles = {}));
 })(Alectryon || (Alectryon = {}));
 
-function setHidden(elements, isVisible) {
+function setHidden(elements, isVisible, token) {
     for (let i = 0; i < elements.length; i++) {
         if (isVisible) {
-            elements[i].classList.remove("hidden")
+            elements[i].classList.remove(token)
         } else {
-            elements[i].classList.add("hidden")
+            elements[i].classList.add(token)
         }
     }
 }
 
 function toggleShowTypes(checkbox) {
-    setHidden(document.getElementsByClassName("alectryon-type-info"), checkbox.checked)
+    setHidden(document.getElementsByClassName("alectryon-io"), checkbox.checked, "type-info-hidden")
 }
 
 function toggleShowGoals(checkbox) {
-    setHidden(document.getElementsByClassName("alectryon-output"), checkbox.checked)
+    setHidden(document.getElementsByClassName("alectryon-io"), checkbox.checked, "output-hidden")
 }

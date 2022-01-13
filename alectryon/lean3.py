@@ -27,6 +27,7 @@ from typing import Any, Iterable, List, Optional, Tuple, TypedDict
 
 from .core import TextREPLDriver, Positioned, Document, Hypothesis, Goal, Message, Sentence, \
     Text, cwd
+from .transforms import transform_contents_to_tokens
 
 class _AstNode(TypedDict):
     kind: str
@@ -223,7 +224,7 @@ class Lean3(TextREPLDriver):
         roots = self._find_nodes_by_kind("commands")
         commands = (self.ast[cidx] for r in roots for cidx in self.ast[r].get("children", []))
         cutoffs = [self.document.pos2offset(*c["start"]) for c in commands if "start" in c]
-        return self.document.split_fragments(fragments, cutoffs)
+        return self.document.split_fragments(transform_contents_to_tokens(fragments), cutoffs)
 
     def partition(self):
         sentences = self._find_sentences()
@@ -278,7 +279,7 @@ class Lean3(TextREPLDriver):
 
     def _annotate_doc(self):
         _, messages = self._query("sync", content=self.document.contents)
-        fragments = self._add_messages(self.partition(), messages)
+        fragments = transform_contents_to_tokens(self._add_messages(self.partition(), messages))
         return list(self.document.recover_chunks(fragments))
 
     def _annotate(self):

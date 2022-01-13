@@ -265,7 +265,7 @@ class HtmlGenerator(Backend):
                 base_cls = "alectryon-type-info-wrapper"
                 cls = base_cls if token.docstring is None else base_cls + " full-width"
                 with tags.div(cls=cls):
-                    with tags.small(cls="alectryon-type-info hidden").add(tags.div(cls="alectryon-goals")):
+                    with tags.small(cls="alectryon-type-info").add(tags.div(cls="alectryon-goals")):
                         if token.typeinfo is not None:
                             self.gen_typeinfo(token.typeinfo)
                             if token.docstring is not None:
@@ -309,7 +309,7 @@ class HtmlGenerator(Backend):
 
     def gen_fragments(self, fragments, ids=(), classes=()):
         """Serialize a list of `fragments` to HTML."""
-        with self._gen_block(tags.pre, ids, ("alectryon-io", "highlight", *classes)) as pre:
+        with self._gen_block(tags.pre, ids, ("alectryon-io", "type-info-hidden", "highlight", *classes)) as pre:
             fragments = transforms.apply_transforms(fragments, [
                 transforms.group_whitespace_with_code,
                 transforms.commit_io_annotations

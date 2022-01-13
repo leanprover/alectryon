@@ -57,7 +57,7 @@ class TopMatcher(str, Matcher):
 
 def find_contents(objs, needle):
     for obj in objs:
-        if needle.match(obj.contents):
+        if needle.match(str(obj.contents)):
             yield obj
 
 def find_named(items, needle):
@@ -69,7 +69,7 @@ def find_named(items, needle):
 def find_sentences(objs, needle):
     for fr in objs:
         # LATER: Add a way to name sentences to make them easier to select
-        if needle.match(fr.input.contents):
+        if needle.match(str(fr.input.contents)):
             yield fr
 
 def find_goals(goals, needle):

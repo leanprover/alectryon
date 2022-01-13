@@ -558,7 +558,7 @@ def strip_coq_failures(fragments):
         if is_coq_fail(fr):
             for msgs in fragment_message_sets(fr):
                 for idx, r in enumerate(msgs):
-                    msgs[idx] = r._replace(contents=r.contents.re_sub(COQ_FAIL_MSG_RE))
+                    msgs[idx] = r._replace(contents=COQ_FAIL_MSG_RE.sub("", r.contents))
             fr = _replace_contents(fr, fr.input.contents.re_sub(COQ_FAIL_RE))
         yield fr
 
@@ -698,7 +698,9 @@ def isolate_coqdoc(fragments):
             partitioned[-1].fragments.append(fr)
     for part in partitioned:
         if isinstance(part, AlectryonFragments):
-            strip_text(part.fragments)
+            # This is a workaround as isolate_coqdoc does not support FragmentContent yet.
+            # This might cause issues of loosing metadata infos.
+            strip_text(transform_contents_to_tokens(part.fragments))
     return partitioned
 
 SURROUNDING_BLANKS_RE = re.compile(r"\A(\s*)(.*?)(\s*)\Z", re.DOTALL)
@@ -737,9 +739,9 @@ def lean3_truncate_vernacs(fragments):
     r"""Strip trailing whitespace in vernacs like ``#check``.
 
     >>> from .core import Message as M
-    >>> list(lean3_truncate_vernacs([Sentence("#check (1 \n+ 1)\n\n", [M("…")], [])]))
-    [Sentence(contents='#check (1 \n+ 1)', messages=[Message(contents='…')], goals=[]),
-     Text(contents='\n\n')]
+    >>> list(lean3_truncate_vernacs([Sentence(FragmentContent.create("#check (1 \n+ 1)\n\n"), [M("…")], [])]))
+    [Sentence(contents=FragmentContent('#check (1 \n+ 1)'), messages=[Message(contents='…')], goals=[]),
+     Text(contents=FragmentContent('\n\n')]
 
     This is only needed in Lean 3: in Lean4 the region for #check statements is
     precisely known (in Lean3 it expands too far).

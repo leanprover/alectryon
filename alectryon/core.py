@@ -67,7 +67,7 @@ Message = namedtuple("Message", "contents")
 TypeInfo = namedtuple("TypeInfo", "name type")
 Sentence = namedtuple("Sentence", "contents messages goals")
 Text = namedtuple("Text", "contents")
-FragmentToken = namedtuple("Token", "raw typeinfo docstring link", defaults=("", None, None, None))
+FragmentToken = namedtuple("FragmentToken", "raw typeinfo docstring link", defaults=("", None, None, None))
 Fragment = Union[Text, Sentence]
 
 class Enriched():
@@ -326,10 +326,10 @@ class Document:
         """Split `fr` at position `cutoff`.
 
         >>> Document.split_fragment(Text(contents=[FragmentToken(raw='ab'), FragmentToken(raw='cx'), FragmentToken(raw='yz')]), 3)
-        (Text(contents=[Token(raw='ab'), Token(raw='c')]), Text(contents=[Token(raw='x'), Token(raw='yz')]))
+        (Text(contents=[FragmentToken(raw='ab'), FragmentToken(raw='c')]), Text(contents=[FragmentToken(raw='x'), FragmentToken(raw='yz')]))
         >>> Document.split_fragment(Sentence(contents=[FragmentToken(raw='ab'), FragmentToken(raw='cx'), FragmentToken(raw='yz')], [Message("out")], []), 3)
-        (Sentence(contents=[Token(raw='ab'), Token(raw='c')], messages=[], goals=[]),
-         Sentence(contents=[Token(raw='x'), Token(raw='yz')], messages=[Message(contents='out')], goals=[]))
+        (Sentence(contents=[FragmentToken(raw='ab'), FragmentToken(raw='c')], messages=[], goals=[]),
+         Sentence(contents=[FragmentToken(raw='x'), FragmentToken(raw='yz')], messages=[Message(contents='out')], goals=[]))
         """
         (before, after) = fr.contents.split_at_pos(cutoff=cutoff)
         fr0: Fragment
@@ -344,11 +344,11 @@ class Document:
         """Split `fragments` at positions `cutoffs`.
 
         >>> list(Document.split_fragments([Text(contents=[FragmentToken(raw="abcdwxyz")])], [0, 2, 4, 5, 7]))
-        [Text(contents=[Token(raw="ab")]), Text(contents=[Token(raw="cd")]),
-         Text(contents=[Token(raw="w")]), Text(contents=[Token(raw="xy")]), Text(contents=[Token(raw="z")])]
+        [Text(contents=[FragmentToken(raw="ab")]), Text(contents=[FragmentToken(raw="cd")]),
+         Text(contents=[FragmentToken(raw="w")]), Text(contents=[FragmentToken(raw="xy")]), Text(contents=[FragmentToken(raw="z")])]
         >>> list(Document.split_fragments([Text(contents=[FragmentToken(raw="abcd")]), Text(contents=[FragmentToken(raw="wxyz")])], [0, 2, 4, 5, 7]))
-        [Text(contents=[Token(raw="ab")]), Text(contents=[Token(raw="cd")]),
-         Text(contents=[Token(raw="w")]), Text(contents=[Token(raw="xy")]), Text(contents=[Token(raw="z")])]
+        [Text(contents=[FragmentToken(raw="ab")]), Text(contents=[FragmentToken(raw="cd")]),
+         Text(contents=[FragmentToken(raw="w")]), Text(contents=[FragmentToken(raw="xy")]), Text(contents=[FragmentToken(raw="z")])]
         """
         fragments = deque(cls.with_boundaries(fragments))
         for cutoff in cutoffs:

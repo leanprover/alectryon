@@ -234,7 +234,8 @@ class LatexGenerator(Backend):
     def gen_input(self, fr):
         with environments.input(verbatim=True):
             self.gen_whitespace(fr.prefixes)
-            self.gen_code(str(fr.input))
+            code = fr.input._replace(contents=str(fr.input.contents))
+            self.gen_code(code)
             # In HTML this space is hidden dynamically when the outputs are
             # visible; in LaTeX we hide it statically.  Hiding these spaces
             # makes our lives easier because we can unconditionally add a line

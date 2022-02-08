@@ -607,5 +607,10 @@ class Lean4Lexer(RegexLexer):
         ],
     }
 
+class AlectryonSemanticTokenLexer(RegexLexer):
+    def get_tokens_unprocessed(self, text, stack=('root')):
+        for item in RegexLexer.get_tokens_unprocessed(self, text, stack):
+            yield item
+
 
 __all__ = ["CoqLexer", "Lean4Lexer"]

@@ -30,13 +30,15 @@ from functools import lru_cache
 import pygments
 import pygments.styles
 import pygments.formatters
-from pygments.token import Error, STANDARD_TYPES, Name, Operator, Text
+from pygments.token import Error, STANDARD_TYPES, Name, Operator, Text, string_to_tokentype
 from pygments.filter import Filter
 from pygments.filters import TokenMergeFilter, NameHighlightFilter
 from pygments.formatter import Formatter
 from pygments.lexers import get_lexer_by_name # pylint: disable=no-name-in-module
 
 from dominate.util import raw as dom_raw
+
+from alectryon.core import FragmentToken
 
 from .pygments_lexer import CoqLexer, Lean4Lexer
 from .pygments_style import AlectryonStyle
@@ -122,6 +124,17 @@ def _highlight(code, lexer, formatter):
         before, code, after = WHITESPACE_RE.match(str(code)).groups()
         return before, pygments.highlight(code, lexer, formatter).strip(), after
 
+def _highlightToken(code, lang, formatter):
+    if isinstance(code, FragmentToken):
+        if code.semanticType != None:
+            tokenType = string_to_tokentype(code.semanticType)
+            with added_tokens({ tokenType: [code.raw] }, lang):
+                return _highlight(code.raw, get_lexer(lang), formatter)
+        else:
+            return _highlight(code.raw, get_lexer(lang), formatter)
+    else:
+        return _highlight(code, get_lexer(lang), formatter)
+
 def validate_style(name):
     if isinstance(name, str):
         known_styles = sorted(pygments.styles.get_all_styles())
@@ -187,7 +200,7 @@ def highlight_html(code, lang, style=None):
     >>> str(highlight_html("Program Fixpoint a.", lang="coq"))
     '<span class="kn">Program Fixpoint</span> <span class="nf">a</span>.'
     """
-    return dom_raw("".join(_highlight(code, get_lexer(lang), get_formatter("html", style))))
+    return dom_raw("".join(_highlightToken(code, lang, get_formatter("html", style))))
 
 PYGMENTS_LATEX_PREFIX = r"\begin{Verbatim}[commandchars=\\\{\}]" + "\n"
 PYGMENTS_LATEX_SUFFIX = r"\end{Verbatim}"
@@ -200,7 +213,7 @@ def highlight_latex(code, lang,
 
     Like ``highlight_html``, but return a plain LaTeX string.
     """
-    before, tex, after = _highlight(code, get_lexer(lang), get_formatter("latex", style))
+    before, tex, after = _highlightToken(code, lang, get_formatter("latex", style))
     if tex.startswith(r"\begin"):
         # LATER: Remove (Pygments 2.12.0+ / 231366c7 recognizes nowrap for LaTeX)
         assert tex.startswith(PYGMENTS_LATEX_PREFIX) and tex.endswith(PYGMENTS_LATEX_SUFFIX), tex

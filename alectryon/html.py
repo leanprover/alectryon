@@ -273,9 +273,9 @@ class HtmlGenerator(Backend):
                         if token.docstring is not None:
                             self.gen_docstring(token.docstring)
             if token.link is not None:
-                tags.a(self.highlight(token.raw), href=token.link)
+                tags.a(self.highlight(token), href=token.link)
             else:
-                self.highlight(token.raw)
+                self.highlight(token)
 
     @staticmethod
     def gen_ids(ids):

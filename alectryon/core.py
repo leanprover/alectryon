@@ -67,7 +67,7 @@ Message = namedtuple("Message", "contents")
 TypeInfo = namedtuple("TypeInfo", "name type")
 Sentence = namedtuple("Sentence", "contents messages goals")
 Text = namedtuple("Text", "contents")
-FragmentToken = namedtuple("FragmentToken", "raw typeinfo docstring link", defaults=("", None, None, None))
+FragmentToken = namedtuple("FragmentToken", "raw typeinfo docstring link semanticType", defaults=("", None, None, None, None))
 Fragment = Union[Text, Sentence]
 
 class Enriched():
@@ -149,13 +149,7 @@ class Backend:
     def highlight_enriched(self, obj):
         lang = obj.props.get("lang")
         with self.highlighter.override(lang=lang) if lang else nullctx():
-            if isinstance(obj.contents, str):
-                return self.highlight(obj.contents)
-            else:
-                list = []
-                for token in obj.contents.tokens:
-                    self.gen_token(token)
-                return list
+            return self.highlight(obj.contents)
 
     def _gen_any(self, obj):
         if isinstance(obj, (Text, RichSentence)):

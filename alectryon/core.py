@@ -149,7 +149,14 @@ class Backend:
     def highlight_enriched(self, obj):
         lang = obj.props.get("lang")
         with self.highlighter.override(lang=lang) if lang else nullctx():
-            return self.highlight(obj.contents)
+            if isinstance(obj.contents, str):
+                return self.highlight(obj.contents)
+            else:
+                list = []
+                for token in obj.contents.tokens:
+                    self.gen_token(token)
+                return list
+
 
     def _gen_any(self, obj):
         if isinstance(obj, (Text, RichSentence)):

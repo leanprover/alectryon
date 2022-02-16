@@ -39,6 +39,7 @@ class Lean4(CLIDriver):
     LANGUAGE = "lean4"
 
     CLI_ARGS = ("analyze", "--x-enable-type-info", "--x-enable-docStrings", "--x-enable-semantic-token",)
+    # CLI_ARGS = ("analyze", "--x-enable-type-info", "--x-enable-docStrings",)
 
     TMP_PREFIX = "leanInk_"
     LEAN_FILE_EXT = ".lean"

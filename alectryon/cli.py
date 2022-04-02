@@ -46,6 +46,18 @@ def read_json(_, fpath, input_is_stdin):
 def parse_plain(contents, fpath):
     return [core.PosStr(contents, core.Position(fpath, 1, 1), 0)]
 
+def parse_literate(contents, input_language):
+    from .literate import partition_literate, LANGUAGES, Comment, Code
+    lang = LANGUAGES[input_language]
+    def postprocess(chunk):
+        if isinstance(chunk, Comment):
+            trimmed = chunk.v.trim(lang.lit_open_re, lang.lit_close_re)
+            return Comment(str(trimmed))
+        else:
+            return Code(str(chunk.v).strip())
+    chunks = list(map(postprocess, partition_literate(lang, contents)))
+    return chunks
+
 def _catch_parsing_errors(fpath, k, *args):
     from .literate import ParsingError
     try:
@@ -74,6 +86,23 @@ def annotate_chunks(chunks, fpath, cache_directory, cache_compression,
         assert isinstance(driver.observer, StderrObserver)
         exit_code.val = int(driver.observer.exit_code >= 3)
         return annotated
+
+def map_code_chunks(chunks, f):
+    from .literate import Code
+    code_chunks = [c.v for c in chunks if isinstance(c, Code)]
+    code_chunks = list(f(code_chunks))
+    res = []
+    j = 0
+    for i in range(len(chunks)):
+        if isinstance(chunks[i], Code):
+            chunks[i] = Code(code_chunks[j])
+            j += 1
+    return chunks
+
+def annotate_chunks_mixed(chunks, fpath, cache_directory, cache_compression,
+                          input_language, driver_name, driver_args, exit_code):
+    return map_code_chunks(chunks, lambda code_chunks: annotate_chunks(code_chunks, fpath, cache_directory, cache_compression,
+                                                                input_language, driver_name, driver_args, exit_code))
 
 def register_docutils(v, ctx):
     from . import docutils
@@ -178,9 +207,14 @@ def _scrub_fname(fname):
     return re.sub("[^-a-zA-Z0-9]", "-", fname)
 
 def apply_transforms(annotated, input_language):
-    from .transforms import default_transform
+    from .transforms import default_transform, enrich_sentences
     for fragments in annotated:
+        # ??
+        fragments = list(enrich_sentences(fragments))
         yield default_transform(fragments, input_language)
+
+def apply_transforms_mixed(chunks, input_language):
+    return map_code_chunks(chunks, lambda code_chunks: apply_transforms(code_chunks, input_language))
 
 def gen_html_snippets(annotated, fname, input_language,
                       html_minification, pygments_style):
@@ -189,6 +223,11 @@ def gen_html_snippets(annotated, fname, input_language,
     fname = _scrub_fname(fname)
     highlighter = make_highlighter("html", input_language, pygments_style)
     return HtmlGenerator(highlighter, fname, html_minification).gen(annotated)
+
+def gen_html_snippets_mixed(chunks, fname, input_language,
+                            html_minification, pygments_style):
+    return map_code_chunks(chunks, lambda code_chunks: gen_html_snippets(code_chunks, fname, input_language,
+                                                                         html_minification, pygments_style))
 
 def gen_latex_snippets(annotated, input_language, pygments_style):
     from .latex import LatexGenerator
@@ -333,6 +372,18 @@ def dump_html_standalone(snippets, fname, webpage_style,
 
     return doc.render(pretty=False)
 
+def dump_html_mixed(snippets, fname, webpage_style,
+                    html_minification, include_banner, include_vernums,
+                    assets, html_classes, input_language, driver_name):
+    #from .html import gen_banner
+    snippets = [s.v for s in snippets]
+    driver = core.resolve_driver(input_language, driver_name)
+    root = []
+    #root.append(gen_banner([driver.version_info()], include_vernums))
+    for snippet in snippets:
+        root.append(str(snippet))
+    return "\n".join(root)
+
 def encode_json(obj):
     from .json import PlainSerializer
     return PlainSerializer.encode(obj)
@@ -452,6 +503,12 @@ def _add_code_pipelines(pipelines, lang, *exts):
         (read_plain, register_docutils, gen_docutils,
          write_file(".lint.json", strip=(*exts, ".rst"))),
     }
+    pipelines[lang + '+markup'] = {
+        'webpage':
+        (read_plain, parse_literate, annotate_chunks_mixed, apply_transforms_mixed,
+         gen_html_snippets_mixed, dump_html_mixed, copy_assets,
+         write_file(".html", strip=exts)),
+    }
 
 def _add_coqdoc_pipeline(pipelines):
     pipelines['coqdoc'] = {
@@ -547,6 +604,7 @@ def _default_language_backends(lang):
         lang + '.json': 'json',
         lang + '.io.json': 'webpage',
         lang + '+rst': 'webpage',
+        lang + '+markup': 'webpage',
     }
 
 DEFAULT_BACKENDS = {
@@ -562,7 +620,7 @@ DEFAULT_BACKENDS = {
 }
 
 def _input_frontends(lang):
-    return [lang, lang + '+rst', lang + '.json', lang + '.io.json']
+    return [lang, lang + '+rst', lang + '+markup', lang + '.json', lang + '.io.json']
 
 INPUT_LANGUAGE_BY_FRONTEND = {
     **{fr: lang

@@ -260,7 +260,7 @@ class HtmlGenerator(Backend):
         tags.blockquote(docstring, cls="alectryon-goal alectryon-docstring")
 
     def gen_token(self, token):
-        with tags.div(cls="alectryon-token"):
+        with tags.span(cls="alectryon-token"):
             if (token.typeinfo is not None) or (token.docstring is not None):
                 base_cls = "alectryon-type-info-wrapper"
                 cls = base_cls if token.docstring is None else base_cls + " full-width"

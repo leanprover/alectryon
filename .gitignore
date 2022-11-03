@@ -1,5 +1,6 @@
 /.idea/
 /dist/
 /venv/
+/build/
 __pycache__/
 alectryon.egg-info/*

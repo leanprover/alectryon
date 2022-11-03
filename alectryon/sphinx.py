@@ -31,6 +31,7 @@ from .pygments import LatexFormatter
 
 # Export here so config files can refer to just this module
 RSTCoqParser = docutils.RSTCoqParser
+RSTLean4Parser = docutils.RSTLean4Parser
 
 # Setup
 # =====
@@ -38,6 +39,8 @@ RSTCoqParser = docutils.RSTCoqParser
 def register_coq_parser(app: "Sphinx"):
     app.add_source_parser(RSTCoqParser)
     app.add_source_suffix('.v', 'coq')
+    app.add_source_parser(RSTLean4Parser)
+    app.add_source_suffix('.lean', 'lean')
 
 def add_assets(app: "Sphinx"):
     app.config.html_static_path.append(HTML_ASSETS.PATH)
